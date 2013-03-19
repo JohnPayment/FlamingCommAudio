@@ -1,0 +1,21 @@
+Buffer Size
+ - 10KB
+
+Packet Size
+ - 1024B
+
+Packet Features
+ - Song Name (limited to 20chars)
+ - Song Length
+ - Current Song Progress (IE. How much of the song has played)
+
+Stream Speed
+ - Sending as fast as possible
+
+
+Pakcet Definition
+1B - Flag indicating this came from the server (or P2P) and not some random elsewhere
+20B - Song Name string
+8B - long unsigned int storing length of song
+8B - long unsigned int storing the position of the song relative to its lenght
+987B - Audio data
