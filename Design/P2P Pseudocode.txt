@@ -1,0 +1,91 @@
+Server Waits for Client Connections
+{
+	Listen for client connections
+	new socket descriptor accepts the client
+	Display IP Address
+}
+
+Client connects to server
+{
+	Connects to server
+	Display Server name and IP Address
+}
+
+Mic Session Request
+{
+	Get Client Socket descriptor and other resources
+	Create an array packet
+	insert a voice chat request ID
+	
+	Send off the packet to the server
+	Wait until it receives a response (blocked)
+	If it receives an acknowledgement
+		Create one thread that starts (monitoring for data from socket())
+}
+
+Process Client Request
+{
+	Get Server Socket descriptor and other resources
+	Waits until it receives a request from the client
+	If the request is a voice chat request ID
+	{
+		Echo back to client the request ID
+		Start Mic Session function
+	}
+	
+}
+
+Mic Session created/initialized (for server only)
+{
+	Create UDP Socket()
+	Create one thread that starts (monitoring for data from socket()) 
+	Create another thread that starts (monitoring for mic input())
+}
+
+Create UDP Socket
+{
+	Create UDP Socket
+}
+
+Bind Socket
+{
+	Bind UDP Socket
+}
+
+Monitor packets for Data (thread function) (Both Client/Server)
+{
+	Initialize Socket Attributes
+	Bind passed in socket
+	while true
+	{
+		If we received something from the socket
+		store packets in buffer
+		Call Playback Audio() function (possibly get the completion callback function to do this)
+		
+	}
+	close socket descriptor if an error occurred
+}
+Playback Audio function
+{
+	if there is an output device
+		Call WaveOutOpen function
+}
+
+
+Monitor Mic Input(Both Client/Server)
+{
+
+	if there is an input device
+	while true
+	{
+		Call WavInOpen function
+		store audio in buffer
+		call send audio data/packets function()
+	}	
+}
+
+Send Audio Data/Packets (Both Client/Server)
+{
+	Get Socket Descriptor and other resources
+	Send to the client/server
+}
