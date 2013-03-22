@@ -1,0 +1,84 @@
+SERVER
+======
+StartupSocket()
+	Create Socket
+	call Startup (WSAStartup)
+	load created socket (WASSocket)
+	Create socket options struct (SOCKADDR_IN) 
+	bind socket (bind)
+
+ListenForConntection()
+	call listen on socket (listen)
+	Create listening event (WSACreateEvent)
+	Create worker thread to handle Socket IO later on
+
+AcceptConnection()
+	loop
+		accept connection
+		set Accept event to false
+
+ListenForCommand()
+	Read from socket
+	if Microphone command is read, goto microphone mode
+	Otherwise, continue if FileIO command is read
+
+SendListOfValidAudioFiles()
+	Get internal list of Playable Audio Files
+	Write list to Socket
+
+WaitForResponse()
+	Read from socket
+	if data = valid name of a Playable audio file, continue
+	If not, return to SendListOfValidAudioFiles()
+
+OpenFile()
+	create a file pointer
+	Open the file indicated by the client data
+
+FileIO()
+	read data from file into buffer
+	if buffer is full or EOF is reached, continue
+
+SendPacket()
+	Write FileIO buffer to socket
+	if EOF is included, return to DisplayFileList()
+	otherwise, return to FileIO()
+
+CLIENT
+======
+StartupSocket()
+	Create Socket
+	call Startup (WSAStartup)
+	load created socket (WASSocket)
+	Create socket options struct (SOCKADDR_IN) 
+	
+ConnectToServer()
+	Call connect on socket
+
+TransmitDataTransterRequest()
+	Get user input
+	if Microphone mode, send command for microphone mode and goto StartMicrophoneMode
+	if FileIO, send command for FileIOMode and continue
+
+DisplayFileList()
+	Read data from socket
+	display data to screen
+
+SendInputtedFileName()
+	Get user input
+	load input into buffer
+	write buffer to socket
+
+WaitForResponse()
+	read data from socket
+	put data into buffer
+	If invalid, return to DisplayFileList()
+	otherwise continue
+
+OpenFileToWrite()
+	open file to write
+
+WritePacketToFile()
+	write data from socket buffer to file
+	if EOF is found, return to DisplayFileList()
+	otherwise, return to WaitForResponse()
