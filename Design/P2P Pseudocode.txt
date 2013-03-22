@@ -20,7 +20,9 @@ Mic Session Request
 	Send off the packet to the server
 	Wait until it receives a response (blocked)
 	If it receives an acknowledgement
-		Create one thread that starts (monitoring for data from socket())
+	{
+		Call Mic Session created/initialized function		
+	}
 }
 
 Process Client Request
@@ -30,14 +32,14 @@ Process Client Request
 	If the request is a voice chat request ID
 	{
 		Echo back to client the request ID
-		Start Mic Session function
+		Create UDP Socket()
+		Call Mic Session created/initialized function
 	}
 	
 }
 
-Mic Session created/initialized (for server only)
-{
-	Create UDP Socket()
+Mic Session created/initialized (client/server)
+{	
 	Create one thread that starts (monitoring for data from socket()) 
 	Create another thread that starts (monitoring for mic input())
 }
