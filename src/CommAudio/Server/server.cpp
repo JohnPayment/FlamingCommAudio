@@ -99,7 +99,7 @@ void RunMulticast()
 	{
 		printf ("setsockopt() IP_MULTICAST_TTL failed, Err: %d\n", WSAGetLastError());
 	}
-	disable_loopback(&socketfd);
+	DisableLoopback(&socketfd);
 	stDstAddr = SetDestinationAddr(achMCAddr, nPort);
 
 	closesocket(socketfd);
