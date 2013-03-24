@@ -1,8 +1,46 @@
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE: server.cpp - Hold the code for the server side of the application.
+--
+-- PROGRAM: CommAudio
+--
+-- FUNCTIONS:
+-- SOCKET NewUDPSocket();
+-- SOCKET NewTCPSocket();
+-- SOCKADDR_IN SetDestinationAddr(std::string address, int port);
+-- void JoinMulticast(SOCKET *socketfd, std::string achMcAddr);
+-- void BindSocket(SOCKET *socketfd, char* hostname, int port);
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- NOTES:
+-- Holds many wrapper functions that will be used by the client and server. 
+----------------------------------------------------------------------------------------------------------------------*/
 #include "utils.h"
 using namespace std;
-
 #pragma comment(lib, "ws2_32.lib")
-
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: NewUDPSocket
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: SOCKET NewUDPSocket()
+--
+-- RETURNS: SOCKET- the new socket descriptor
+--
+-- NOTES: Wrapper for creating a UDP socket. 
+----------------------------------------------------------------------------------------------------------------------*/
 SOCKET NewUDPSocket()
 {
 	SOCKET socketfd;
@@ -14,6 +52,23 @@ SOCKET NewUDPSocket()
 	}
 	return socketfd;
 }
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: NewTCPSocket
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: SOCKET NewTCPSocket()
+--
+-- RETURNS: SOCKET - the new socket descriptor
+--
+-- NOTES: Wrapper for creating a new TCP socket.
+----------------------------------------------------------------------------------------------------------------------*/
 SOCKET NewTCPSocket()
 {
 	SOCKET socketfd;
@@ -25,6 +80,23 @@ SOCKET NewTCPSocket()
 	}
 	return socketfd;
 }
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: SetDestinationAddr
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: SOCKADDR_IN SetDestinationAddr(string address, int port)
+--
+-- RETURNS: SOCKADDR_IN - struct for the destination address.
+--
+-- NOTES: Wrapper for setting the destination address we will be sending to.
+----------------------------------------------------------------------------------------------------------------------*/
 SOCKADDR_IN SetDestinationAddr(string address, int port)
 {
 	SOCKADDR_IN stDstAddr;
@@ -35,7 +107,24 @@ SOCKADDR_IN SetDestinationAddr(string address, int port)
 
 	return stDstAddr;
 }
-int JoinMulticast(SOCKET *socketfd, string achMcAddr)
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: JoinMulticast
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: int JoinMulticast(SOCKET *socketfd, string achMcAddr)
+--
+-- RETURNS: void.
+--
+-- NOTES: Wrapper for joining a multicast group.
+----------------------------------------------------------------------------------------------------------------------*/
+void JoinMulticast(SOCKET *socketfd, string achMcAddr)
 {
 	int nRet;
 	struct ip_mreq stMreq;  
@@ -46,16 +135,32 @@ int JoinMulticast(SOCKET *socketfd, string achMcAddr)
 	{
 		printf ("setsockopt() IP_ADD_MEMBERSHIP address %s failed, Err: %d\n", achMcAddr.c_str(), WSAGetLastError());
 	} 
-	return 0;
 }
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: BindSocket
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: void BindSocket(SOCKET *socketfd, char* hostname, int port)
+--
+-- RETURNS: void.
+--
+-- NOTES: Wrapper for binding a socket to an address.
+----------------------------------------------------------------------------------------------------------------------*/
 void BindSocket(SOCKET *socketfd, char* hostname, int port)
 {
 	int nRet;
 	SOCKADDR_IN stLclAddr;
 
 	stLclAddr.sin_family      = AF_INET;
-	stLclAddr.sin_port        = port;                 /* any port */
-	hostname == NULL ? stLclAddr.sin_addr.s_addr = htonl(INADDR_ANY) : stLclAddr.sin_addr.s_addr = htonl((u_long)hostname);
+	stLclAddr.sin_port        = port;
+	hostname == NULL ? stLclAddr.sin_addr.s_addr = htonl(INADDR_ANY) : stLclAddr.sin_addr.s_addr = inet_addr(hostname);
 	nRet = bind(*socketfd, (struct sockaddr*) &stLclAddr, sizeof(stLclAddr));
 
 	if (nRet == SOCKET_ERROR) 

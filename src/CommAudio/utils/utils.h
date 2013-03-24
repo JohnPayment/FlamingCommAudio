@@ -10,7 +10,7 @@
 SOCKET NewUDPSocket();
 SOCKET NewTCPSocket();
 SOCKADDR_IN SetDestinationAddr(std::string address, int port);
-int JoinMulticast(SOCKET *socketfd, std::string achMcAddr);
+void JoinMulticast(SOCKET *socketfd, std::string achMcAddr);
 void BindSocket(SOCKET *socketfd, char* hostname, int port);
 
 

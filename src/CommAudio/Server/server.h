@@ -9,8 +9,7 @@
 #define TIMECAST_TTL    2
 #define TIMECAST_INTRVL 30
 
-int disable_loopback(SOCKET *socketfd);
-void show_usage(void);
-void run_multicast();
+void DisableLoopback(SOCKET *socketfd);
+void RunMulticast();
 
 #endif
