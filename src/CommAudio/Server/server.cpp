@@ -29,7 +29,6 @@ string achMCAddr		   = TIMECAST_ADDR;
 u_long lMCAddr;
 u_short nPort              = TIMECAST_PORT;
 u_long  lTTL               = TIMECAST_TTL;
-u_short nInterval          = TIMECAST_INTRVL;
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: DisableLoopback
