@@ -168,3 +168,31 @@ void BindSocket(SOCKET *socketfd, char* hostname, int port)
 		printf ("bind() port: %d failed, Err: %d\n", port, WSAGetLastError());
 	}
 }
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: ReadFromFile
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: int ReadFromFile(HANDLE hFile, char* buffer)
+--
+-- RETURNS: int - number of bytes read
+--
+-- NOTES: Wrapper for reading from a file.
+----------------------------------------------------------------------------------------------------------------------*/
+int ReadFromFile(HANDLE hFile, char* buffer)
+{
+	DWORD BytesRead;
+	DWORD BytesToRead = BUFLEN - 1;
+	if(!ReadFile(hFile, buffer, BytesToRead, &BytesRead, NULL))
+	{
+		printf("ReadFile() error. Err: %d\n", GetLastError());
+	}
+
+	return BytesRead;
+}

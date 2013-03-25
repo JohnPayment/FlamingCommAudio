@@ -22,6 +22,7 @@
 ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "server.h"
+#include <conio.h>
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 string achMCAddr		   = TIMECAST_ADDR;
@@ -79,10 +80,13 @@ void RunMulticast()
 	int nRet, i;
 	BOOL  fFlag;
 	SOCKADDR_IN stDstAddr;
-    /* Multicast interface structure */
 	SOCKET socketfd;
 	WSADATA stWSAData;
-	/* Init WinSock */
+	HANDLE hFile;
+
+	hFile = CreateFile("test.txt", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	char buffer[BUFLEN];
+	memset(buffer, 0, BUFLEN);
 	nRet = WSAStartup(0x0202, &stWSAData);
 	if (nRet) 
 	{
@@ -94,13 +98,69 @@ void RunMulticast()
 	JoinMulticast(&socketfd, achMCAddr);
 
 	/* Set IP TTL to traverse up to multiple routers */
-	nRet = setsockopt(socketfd, IPPROTO_IP, IP_MULTICAST_TTL, (char *)&lTTL, sizeof(lTTL));
+	SetTimeToLive(socketfd, lTTL);
+	DisableLoopback(&socketfd);
+	stDstAddr = SetDestinationAddr(achMCAddr, nPort);
+
+	_getch();
+	while(ReadFromFile(hFile, buffer))
+	{
+		printf("Sending...");
+		SendToMulticastGroup(socketfd, buffer, (struct sockaddr*) &stDstAddr);
+		Sleep(2000);
+	}
+
+	closesocket(socketfd);
+}
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: SendToMulticastGroup
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: int SendToMulticastGroup(SOCKET s, const char* buf, const struct sockaddr *dest)
+--
+-- RETURNS: int - number of bytes sent
+--
+-- NOTES: Wrapper for sending the buffer data to the multicast group.
+----------------------------------------------------------------------------------------------------------------------*/
+int SendToMulticastGroup(SOCKET s, char* buf, const struct sockaddr *dest)
+{
+	int result;
+	if((result = sendto(s, buf, BUFLEN, 0, dest,  sizeof(*dest))) == SOCKET_ERROR)
+	{
+		printf("sendto() error. Err: %d\n", WSAGetLastError());
+	}
+	memset(buf, 0, BUFLEN);
+	return result;
+}
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: SetTimeToLive
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: void SetTimeToLive(SOCKET s, u_long TTL)
+--
+-- RETURNS: void.
+--
+-- NOTES: Wrapper for setting the time to live on a socket.
+----------------------------------------------------------------------------------------------------------------------*/
+void SetTimeToLive(SOCKET s, u_long TTL)
+{
+	int nRet = setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, (char *)&TTL, sizeof(TTL));
 	if (nRet == SOCKET_ERROR) 
 	{
 		printf ("setsockopt() IP_MULTICAST_TTL failed, Err: %d\n", WSAGetLastError());
 	}
-	DisableLoopback(&socketfd);
-	stDstAddr = SetDestinationAddr(achMCAddr, nPort);
-
-	closesocket(socketfd);
 }
