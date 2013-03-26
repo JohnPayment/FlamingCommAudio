@@ -111,7 +111,7 @@ void RunMulticast()
 	{
 		printf("Sending...");
 		UDPSend(socketfd, buffer, (struct sockaddr*) &stDstAddr, &sendOv);
-		Sleep(2000);
+		Sleep(1000);
 	}
 
 	closesocket(socketfd);

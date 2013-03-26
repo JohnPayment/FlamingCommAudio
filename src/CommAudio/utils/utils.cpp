@@ -265,18 +265,20 @@ void CALLBACK UDPRecvComplete(DWORD dwError, DWORD dwTransferred, OVERLAPPED *lp
 	static DWORD dwTotalTransferred;
 	int addrLen = sizeof(sockaddr);
 
-	if(dwTransferred == 0)
+	assert(dwError == 0 );
+
+    if ( dwTransferred == 0 ) 
 	{
+    // If we received 0 bytes, the remote side has close the connection
 		data->bQuit = true;
 		return;
-	}
+    } 
 
-	dwTotalTransferred += dwTransferred;
-	WSABUF buf;
-	buf.buf = &data->recvBuffer[dwTotalTransferred];
-	buf.len = RECV_MAX - dwTotalTransferred;
-
-	assert(WSARecvFrom(*(data->sock), &buf, 1, &dwTransferred, &dwFlags, data->dest, &addrLen, lpOverlapped, UDPRecvComplete) == 0 || WSAGetLastError() == WSA_IO_PENDING);
+    WSABUF buf;
+	buf.buf = data->recvBuffer;
+    buf.len = RECV_MAX;
+	assert( WSARecvFrom(*(data->sock), &buf, 1,  &dwTransferred, &dwFlags, data->dest, &addrLen, lpOverlapped, UDPRecvComplete ) == 0 || WSAGetLastError() == WSA_IO_PENDING );
+        
 }
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: UDPRead
