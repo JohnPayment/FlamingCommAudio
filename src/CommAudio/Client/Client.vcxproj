@@ -76,6 +76,7 @@
   <ItemGroup>
     <ClCompile Include="..\utils\utils.cpp" />
     <ClCompile Include="client.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\utils\utils.h" />

@@ -10,6 +10,6 @@
 
 void DisableLoopback(SOCKET *socketfd);
 void RunMulticast();
-int SendToMulticastGroup(SOCKET s, char* buf, const struct sockaddr *dest);
 void SetTimeToLive(SOCKET s, u_long TTL);
+
 #endif

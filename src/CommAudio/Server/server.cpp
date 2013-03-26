@@ -22,13 +22,15 @@
 ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "server.h"
-#include <conio.h>
+
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 string achMCAddr		   = TIMECAST_ADDR;
 u_long lMCAddr;
 u_short nPort              = TIMECAST_PORT;
 u_long  lTTL               = TIMECAST_TTL;
+bool bQuit;
+OVERLAPPED sendOv;
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: DisableLoopback
@@ -82,9 +84,12 @@ void RunMulticast()
 	SOCKET socketfd;
 	WSADATA stWSAData;
 	HANDLE hFile;
+	char buffer[BUFLEN];
+
+	ZeroMemory(&sendOv, sizeof(OVERLAPPED));
 
 	hFile = CreateFile("test.txt", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	char buffer[BUFLEN];
+
 	memset(buffer, 0, BUFLEN);
 	nRet = WSAStartup(0x0202, &stWSAData);
 	if (nRet) 
@@ -105,39 +110,13 @@ void RunMulticast()
 	while(ReadFromFile(hFile, buffer))
 	{
 		printf("Sending...");
-		SendToMulticastGroup(socketfd, buffer, (struct sockaddr*) &stDstAddr);
+		UDPSend(socketfd, buffer, (struct sockaddr*) &stDstAddr, &sendOv);
 		Sleep(2000);
 	}
 
 	closesocket(socketfd);
 }
-/*-------------------------------------------------------------------------------------------------------------------- 
--- FUNCTION: SendToMulticastGroup
---
--- DATE: 2013/03/24
---
--- REVISIONS: (Date and Description)
---
--- DESIGNER: Jesse Wright
---
--- PROGRAMMER: Jesse Wright
---
--- INTERFACE: int SendToMulticastGroup(SOCKET s, const char* buf, const struct sockaddr *dest)
---
--- RETURNS: int - number of bytes sent
---
--- NOTES: Wrapper for sending the buffer data to the multicast group.
-----------------------------------------------------------------------------------------------------------------------*/
-int SendToMulticastGroup(SOCKET s, char* buf, const struct sockaddr *dest)
-{
-	int result;
-	if((result = sendto(s, buf, BUFLEN, 0, dest,  sizeof(*dest))) == SOCKET_ERROR)
-	{
-		printf("sendto() error. Err: %d\n", WSAGetLastError());
-	}
-	memset(buf, 0, BUFLEN);
-	return result;
-}
+
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: SetTimeToLive
 --

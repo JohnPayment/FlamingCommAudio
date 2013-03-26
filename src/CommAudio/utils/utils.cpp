@@ -39,12 +39,12 @@ using namespace std;
 --
 -- RETURNS: SOCKET- the new socket descriptor
 --
--- NOTES: Wrapper for creating a UDP socket. 
+-- NOTES: Wrapper for creating a new overlapped UDP socket. 
 ----------------------------------------------------------------------------------------------------------------------*/
 SOCKET NewUDPSocket()
 {
 	SOCKET socketfd;
-	socketfd = socket(AF_INET, SOCK_DGRAM, 0);
+	socketfd = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0, 0, 0);
 	if (socketfd == INVALID_SOCKET) 
 	{
 		printf ("socket() failed, Err: %d\n", WSAGetLastError());
@@ -67,12 +67,12 @@ SOCKET NewUDPSocket()
 --
 -- RETURNS: SOCKET - the new socket descriptor
 --
--- NOTES: Wrapper for creating a new TCP socket.
+-- NOTES: Wrapper for creating a new overlapped TCP socket.
 ----------------------------------------------------------------------------------------------------------------------*/
 SOCKET NewTCPSocket()
 {
 	SOCKET socketfd;
-	socketfd = socket(AF_INET, SOCK_STREAM, 0);
+	socketfd = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
 	if (socketfd == INVALID_SOCKET) 
 	{
 		printf ("socket() failed, Err: %d\n", WSAGetLastError());
@@ -195,4 +195,117 @@ int ReadFromFile(HANDLE hFile, char* buffer)
 	}
 
 	return BytesRead;
+}
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: UDPSend
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: int UDPSend(SOCKET s, const char* buf, const struct sockaddr *dest)
+--
+-- RETURNS: int - number of bytes sent
+--
+-- NOTES: Wrapper for sending the buffer data to a UDP Socket
+----------------------------------------------------------------------------------------------------------------------*/
+void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv)
+{
+	WSABUF buffer;
+	buffer.buf = buf;
+	buffer.len = strlen(buf);
+	assert(WSASendTo(s, &buffer, 1, NULL, 0, dest, sizeof(struct sockaddr), sendOv, UDPSendComplete)  == 0 || WSAGetLastError() == WSA_IO_PENDING);
+	memset(buf, 0, BUFLEN);
+}
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: UDPSendComplete
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: void CALLBACK UDPSendComplete(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags)
+--
+-- RETURNS: void.
+--
+-- NOTES: CompletionRoutine for sending via a UDP socket. Just checks for errors.
+----------------------------------------------------------------------------------------------------------------------*/
+void CALLBACK UDPSendComplete(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags)
+{
+	assert(dwError == 0);
+}
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: UDPRecvComplete
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: void CALLBACK UDPRecvComplete(DWORD dwError, DWORD dwTransferred, OVERLAPPED *lpOverlapped, DWORD dwFlags)
+--
+-- RETURNS: void.
+--
+-- NOTES: CompletionRoutine for recieving via a UDP socket. Checks bytes trasnferred and posts another WSARecvFrom.
+----------------------------------------------------------------------------------------------------------------------*/
+void CALLBACK UDPRecvComplete(DWORD dwError, DWORD dwTransferred, OVERLAPPED *lpOverlapped, DWORD dwFlags)
+{
+	recvData *data = (struct recvData*)lpOverlapped->hEvent;
+	static DWORD dwTotalTransferred;
+	int addrLen = sizeof(sockaddr);
+
+	if(dwTransferred == 0)
+	{
+		data->bQuit = true;
+		return;
+	}
+
+	dwTotalTransferred += dwTransferred;
+	WSABUF buf;
+	buf.buf = &data->recvBuffer[dwTotalTransferred];
+	buf.len = RECV_MAX - dwTotalTransferred;
+
+	assert(WSARecvFrom(*(data->sock), &buf, 1, &dwTransferred, &dwFlags, data->dest, &addrLen, lpOverlapped, UDPRecvComplete) == 0 || WSAGetLastError() == WSA_IO_PENDING);
+}
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: UDPRead
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: void UDPRead(OVERLAPPED *recvOv)
+--
+-- RETURNS: int - number of bytes read
+--
+-- NOTES: The overlapped structures "hEvent" will hold a pointer to a recvData struct and we will get the socket,
+-- recvBuffer, among other things from there. Must be set before this function is called.
+----------------------------------------------------------------------------------------------------------------------*/
+void UDPRead(OVERLAPPED *recvOv)
+{
+	recvData *data = (recvData*) recvOv->hEvent;
+	int addrLen = sizeof(struct sockaddr);
+	DWORD dwTransferred;
+
+	WSABUF buffer;
+	buffer.buf = data->recvBuffer;
+	buffer.len = RECV_MAX;
+
+	assert(WSARecvFrom(*(data->sock), &buffer, 1, &dwTransferred, 0, data->dest, &addrLen, recvOv, UDPRecvComplete) == 0 || WSAGetLastError() == WSA_IO_PENDING);
+
 }
