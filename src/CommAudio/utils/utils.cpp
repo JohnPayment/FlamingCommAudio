@@ -44,7 +44,7 @@ using namespace std;
 SOCKET NewUDPSocket()
 {
 	SOCKET socketfd;
-	socketfd = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0, 0, 0);
+	socketfd = WSASocket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0, 0, WSA_FLAG_OVERLAPPED);
 	if (socketfd == INVALID_SOCKET) 
 	{
 		printf ("socket() failed, Err: %d\n", WSAGetLastError());
@@ -72,7 +72,7 @@ SOCKET NewUDPSocket()
 SOCKET NewTCPSocket()
 {
 	SOCKET socketfd;
-	socketfd = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
+	socketfd = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
 	if (socketfd == INVALID_SOCKET) 
 	{
 		printf ("socket() failed, Err: %d\n", WSAGetLastError());
