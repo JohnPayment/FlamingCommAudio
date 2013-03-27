@@ -1,5 +1,6 @@
 /*------------------------------------------------------------------------------------------------------------------
--- SOURCE FILE: server.cpp - Hold the code for the server side of the application.
+-- SOURCE FILE: utils.cpp - Hold the code that is used in both the server and client applications to avoid duplicate
+--							code.
 --
 -- PROGRAM: CommAudio
 --
@@ -7,8 +8,13 @@
 -- SOCKET NewUDPSocket();
 -- SOCKET NewTCPSocket();
 -- SOCKADDR_IN SetDestinationAddr(std::string address, int port);
--- void JoinMulticast(SOCKET *socketfd, std::string achMcAddr);
--- void BindSocket(SOCKET *socketfd, char* hostname, int port);
+-- int JoinMulticast(SOCKET *socketfd, std::string achMcAddr);
+-- int BindSocket(SOCKET *socketfd, char* hostname, int port);
+-- int SetReuseAddr(SOCKET* socketfd);
+-- void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
+-- void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv);
+-- int ReadFromFile(HANDLE hFile, char* buffer);
+--
 --
 -- DATE: 2013/03/23
 --
@@ -48,7 +54,6 @@ SOCKET NewUDPSocket()
 	if (socketfd == INVALID_SOCKET) 
 	{
 		printf ("socket() failed, Err: %d\n", WSAGetLastError());
-		exit(1);
 	}
 	return socketfd;
 }
@@ -76,7 +81,6 @@ SOCKET NewTCPSocket()
 	if (socketfd == INVALID_SOCKET) 
 	{
 		printf ("socket() failed, Err: %d\n", WSAGetLastError());
-		exit(1);
 	}
 	return socketfd;
 }
@@ -86,6 +90,8 @@ SOCKET NewTCPSocket()
 -- DATE: 2013/03/23
 --
 -- REVISIONS: (Date and Description)
+--			2013/03/26 - Jesse Wright:
+--			Changed function to use a hostent struct so we can also set addr for TCP connection on the client side
 --
 -- DESIGNER: Jesse Wright
 --
@@ -95,17 +101,24 @@ SOCKET NewTCPSocket()
 --
 -- RETURNS: SOCKADDR_IN - struct for the destination address.
 --
--- NOTES: Wrapper for setting the destination address we will be sending to.
+-- NOTES: Wrapper for setting the address we'll be sending to (UDP) or connecting to (TCP).
 ----------------------------------------------------------------------------------------------------------------------*/
 SOCKADDR_IN SetDestinationAddr(string address, int port)
 {
-	SOCKADDR_IN stDstAddr;
-	/* Assign our destination address */
-	stDstAddr.sin_family 		= AF_INET;
-	stDstAddr.sin_addr.s_addr 	= inet_addr(address.c_str());
-	stDstAddr.sin_port 			= htons(port);
+	SOCKADDR_IN addr;
+	struct hostent *hp;
 
-	return stDstAddr;
+	memset((char *)&addr, 0, sizeof(struct sockaddr_in));
+	addr.sin_family 		= AF_INET;
+	addr.sin_port 			= htons(port);
+	if ((hp = gethostbyname(address.c_str())) == NULL)
+	{
+		printf("Unknown server address\n");
+	}
+	// Copy the server address
+	memcpy((char *)&addr.sin_addr, hp->h_addr, hp->h_length);
+
+	return addr;
 }
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: JoinMulticast
@@ -244,6 +257,23 @@ void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpO
 {
 	assert(dwError == 0);
 }
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: SetReuseAddr
+--
+-- DATE: 2013/03/26
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: int SetReuseAddr(SOCKET* socketfd)
+--
+-- RETURNS: int - result of setsockopt.
+--
+-- NOTES: Sets the reuse addr option on the socket so we can use the port again once the application has ended.
+----------------------------------------------------------------------------------------------------------------------*/
 int SetReuseAddr(SOCKET* socketfd)
 {
 	int result;
