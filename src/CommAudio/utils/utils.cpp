@@ -124,7 +124,7 @@ SOCKADDR_IN SetDestinationAddr(string address, int port)
 --
 -- NOTES: Wrapper for joining a multicast group.
 ----------------------------------------------------------------------------------------------------------------------*/
-void JoinMulticast(SOCKET *socketfd, string achMcAddr)
+int JoinMulticast(SOCKET *socketfd, string achMcAddr)
 {
 	int nRet;
 	struct ip_mreq stMreq;  
@@ -134,7 +134,8 @@ void JoinMulticast(SOCKET *socketfd, string achMcAddr)
 	if (nRet == SOCKET_ERROR) 
 	{
 		printf ("setsockopt() IP_ADD_MEMBERSHIP address %s failed, Err: %d\n", achMcAddr.c_str(), WSAGetLastError());
-	} 
+	}
+	return nRet;
 }
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: BindSocket
@@ -153,20 +154,20 @@ void JoinMulticast(SOCKET *socketfd, string achMcAddr)
 --
 -- NOTES: Wrapper for binding a socket to an address.
 ----------------------------------------------------------------------------------------------------------------------*/
-void BindSocket(SOCKET *socketfd, char* hostname, int port)
+int BindSocket(SOCKET *socketfd, char* hostname, int port)
 {
 	int nRet;
 	SOCKADDR_IN stLclAddr;
 
 	stLclAddr.sin_family      = AF_INET;
-	stLclAddr.sin_port        = port;
+	stLclAddr.sin_port        = htons(port);
 	hostname == NULL ? stLclAddr.sin_addr.s_addr = htonl(INADDR_ANY) : stLclAddr.sin_addr.s_addr = inet_addr(hostname);
 	nRet = bind(*socketfd, (struct sockaddr*) &stLclAddr, sizeof(stLclAddr));
-
 	if (nRet == SOCKET_ERROR) 
 	{
 		printf ("bind() port: %d failed, Err: %d\n", port, WSAGetLastError());
 	}
+	return nRet;
 }
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: ReadFromFile
@@ -218,11 +219,11 @@ void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendO
 	WSABUF buffer;
 	buffer.buf = buf;
 	buffer.len = strlen(buf);
-	assert(WSASendTo(s, &buffer, 1, NULL, 0, dest, sizeof(struct sockaddr), sendOv, UDPSendComplete)  == 0 || WSAGetLastError() == WSA_IO_PENDING);
+	assert(WSASendTo(s, &buffer, 1, NULL, 0, dest, sizeof(struct sockaddr), sendOv, UDPRoutine)  == 0 || WSAGetLastError() == WSA_IO_PENDING);
 	memset(buf, 0, BUFLEN);
 }
 /*-------------------------------------------------------------------------------------------------------------------- 
--- FUNCTION: UDPSendComplete
+-- FUNCTION: UDPRoutine
 --
 -- DATE: 2013/03/24
 --
@@ -232,82 +233,24 @@ void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendO
 --
 -- PROGRAMMER: Jesse Wright
 --
--- INTERFACE: void CALLBACK UDPSendComplete(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags)
+-- INTERFACE: void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags)
 --
 -- RETURNS: void.
 --
--- NOTES: CompletionRoutine for sending via a UDP socket. Just checks for errors.
+-- NOTES: CompletionRoutine for sending/recieving via a UDP socket. Just checks for errors. Since UDP is either all
+-- other nothing, we don't need to do any processing in this. We will simply error check.
 ----------------------------------------------------------------------------------------------------------------------*/
-void CALLBACK UDPSendComplete(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags)
+void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags)
 {
 	assert(dwError == 0);
 }
-/*-------------------------------------------------------------------------------------------------------------------- 
--- FUNCTION: UDPRecvComplete
---
--- DATE: 2013/03/24
---
--- REVISIONS: (Date and Description)
---
--- DESIGNER: Jesse Wright
---
--- PROGRAMMER: Jesse Wright
---
--- INTERFACE: void CALLBACK UDPRecvComplete(DWORD dwError, DWORD dwTransferred, OVERLAPPED *lpOverlapped, DWORD dwFlags)
---
--- RETURNS: void.
---
--- NOTES: CompletionRoutine for recieving via a UDP socket. Checks bytes trasnferred and posts another WSARecvFrom.
-----------------------------------------------------------------------------------------------------------------------*/
-void CALLBACK UDPRecvComplete(DWORD dwError, DWORD dwTransferred, OVERLAPPED *lpOverlapped, DWORD dwFlags)
+int SetReuseAddr(SOCKET* socketfd)
 {
-	recvData *data = (struct recvData*)lpOverlapped->hEvent;
-	static DWORD dwTotalTransferred;
-	int addrLen = sizeof(sockaddr);
-
-	assert(dwError == 0 );
-
-    if ( dwTransferred == 0 ) 
+	int result;
+	bool flag = true;
+	if((result = setsockopt(*socketfd, SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(flag))) == SOCKET_ERROR)
 	{
-    // If we received 0 bytes, the remote side has close the connection
-		data->bQuit = true;
-		return;
-    } 
-
-    WSABUF buf;
-	buf.buf = data->recvBuffer;
-    buf.len = RECV_MAX;
-	assert( WSARecvFrom(*(data->sock), &buf, 1,  &dwTransferred, &dwFlags, data->dest, &addrLen, lpOverlapped, UDPRecvComplete ) == 0 || WSAGetLastError() == WSA_IO_PENDING );
-        
-}
-/*-------------------------------------------------------------------------------------------------------------------- 
--- FUNCTION: UDPRead
---
--- DATE: 2013/03/24
---
--- REVISIONS: (Date and Description)
---
--- DESIGNER: Jesse Wright
---
--- PROGRAMMER: Jesse Wright
---
--- INTERFACE: void UDPRead(OVERLAPPED *recvOv)
---
--- RETURNS: int - number of bytes read
---
--- NOTES: The overlapped structures "hEvent" will hold a pointer to a recvData struct and we will get the socket,
--- recvBuffer, among other things from there. Must be set before this function is called.
-----------------------------------------------------------------------------------------------------------------------*/
-void UDPRead(OVERLAPPED *recvOv)
-{
-	recvData *data = (recvData*) recvOv->hEvent;
-	int addrLen = sizeof(struct sockaddr);
-	DWORD dwTransferred;
-
-	WSABUF buffer;
-	buffer.buf = data->recvBuffer;
-	buffer.len = RECV_MAX;
-
-	assert(WSARecvFrom(*(data->sock), &buffer, 1, &dwTransferred, 0, data->dest, &addrLen, recvOv, UDPRecvComplete) == 0 || WSAGetLastError() == WSA_IO_PENDING);
-
+		printf("setsockopt error: %d\n", WSAGetLastError());
+	}
+	return result;
 }

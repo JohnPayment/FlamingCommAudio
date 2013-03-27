@@ -3,9 +3,7 @@
 	This is only a place holder so that the client will build without error.
 
 --------------------------------------------------------------*/
-
-#include <windows.h>
-
+#include "client.h"
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM) ;
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -67,6 +65,7 @@ LRESULT CALLBACK WndProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      {
      case WM_CREATE:
           //PlaySound (TEXT ("hellowin.wav"), NULL, SND_FILENAME | SND_ASYNC) ;
+		  CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) ClientMulticastThread, NULL, 0, NULL);
           return 0 ;
           
      case WM_PAINT:

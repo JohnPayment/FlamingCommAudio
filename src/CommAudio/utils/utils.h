@@ -3,6 +3,7 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 #include <stdio.h>
 #include <string>
 #include <cstdlib>
@@ -10,7 +11,7 @@
 #include <cassert>
 
 #define BUFLEN 1024
-#define RECV_MAX 1024
+#define RECV_MAX 2048
 //This struct will be assigned to the OVerlapped struct 
 //hEvent parameter for use in the Completion Routine.
 typedef struct recvData
@@ -24,12 +25,12 @@ typedef struct recvData
 SOCKET NewUDPSocket();
 SOCKET NewTCPSocket();
 SOCKADDR_IN SetDestinationAddr(std::string address, int port);
-void JoinMulticast(SOCKET *socketfd, std::string achMcAddr);
-void BindSocket(SOCKET *socketfd, char* hostname, int port);
+int JoinMulticast(SOCKET *socketfd, std::string achMcAddr);
+int BindSocket(SOCKET *socketfd, char* hostname, int port);
 int ReadFromFile(HANDLE hFile, char* buffer);
-void CALLBACK UDPSendComplete(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
+void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
 void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv);
-void CALLBACK UDPRecvComplete(DWORD dwError, DWORD dwTransferred, OVERLAPPED *lpOverlapped, DWORD dwFlags);
 void UDPRead(OVERLAPPED *recvOv);
+int SetReuseAddr(SOCKET* socketfd);
 
 #endif
