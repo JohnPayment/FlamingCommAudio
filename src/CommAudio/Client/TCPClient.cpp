@@ -43,10 +43,7 @@ TCPClient::TCPClient(sockaddr_in server)
 void 
 TCPClient::StartClient()
 {
-	int n, ns, bytes_to_read;
 	int err;
-	char *bp; 
-	char rbuf[BUFFER_SIZE], sbuf[BUFFER_SIZE], **pptr;
 	WSADATA WSAData;
 	WORD wVersionRequested;
 
