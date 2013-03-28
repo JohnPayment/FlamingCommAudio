@@ -81,6 +81,10 @@
   <ItemGroup>
     <ClInclude Include="..\utils\utils.h" />
     <ClInclude Include="client.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Client.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
