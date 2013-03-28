@@ -77,11 +77,13 @@
     <ClCompile Include="..\utils\utils.cpp" />
     <ClCompile Include="client.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="TCPClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\utils\utils.h" />
     <ClInclude Include="client.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="TCPClient.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Client.rc" />

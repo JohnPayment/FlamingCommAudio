@@ -4,6 +4,7 @@
 
 --------------------------------------------------------------*/
 #include "client.h"
+#include "TCPClient.h"
 #include "resource.h"
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -26,7 +27,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	wndclass.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
 	wndclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground =(HBRUSH) GetStockObject(WHITE_BRUSH);
-	wndclass.lpszMenuName  = NULL;
+	wndclass.lpszMenuName  = MAKEINTRESOURCE(IDR_MENU1);
 	wndclass.lpszClassName = szAppName;
 
 	if(!RegisterClass(&wndclass))
@@ -37,17 +38,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	}
      
 	hwnd = CreateWindow(szAppName,                  // window class name
-	                     TEXT("The Hello Program"), // window caption
-	                     WS_OVERLAPPEDWINDOW,        // window style
-	                     CW_USEDEFAULT,              // initial x position
-	                     CW_USEDEFAULT,              // initial y position
-	                     CW_USEDEFAULT,              // initial x size
-	                     CW_USEDEFAULT,              // initial y size
-	                     NULL,                       // parent window handle
-	                     NULL,                       // window menu handle
-	                     hInstance,                  // program instance handle
-	                     NULL);                     // creation parameters
-     
+	                    TEXT("The Hello Program"), // window caption
+	                    WS_OVERLAPPEDWINDOW,        // window style
+	                    CW_USEDEFAULT,              // initial x position
+	                    CW_USEDEFAULT,              // initial y position
+	                    CW_USEDEFAULT,              // initial x size
+	                    CW_USEDEFAULT,              // initial y size
+	                    NULL,                       // parent window handle
+	                    NULL,                       // window menu handle
+	                    hInstance,                  // program instance handle
+	                    NULL);                     // creation parameters
+    
 	ShowWindow(hwnd, iCmdShow);
 	UpdateWindow(hwnd);
      
@@ -111,6 +112,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_CONNECTMENU_RADIO:
 			break;
 		case ID_CONNECTMENU_P2P:
+
 			break;
 		case ID_CONNECTMENU_FILETRANSFER:
 			break;
