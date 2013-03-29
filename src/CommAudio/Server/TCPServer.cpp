@@ -13,11 +13,45 @@ TCPServer::get()
 	return _Server;
 }
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: TCPServer
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: TCPServer()
+--
+-- RETURNS: N/A
+--
+-- NOTES: Constructor for TCPServer. Private for Singleton class
+----------------------------------------------------------------------------------------------------------------------*/
 TCPServer::TCPServer()
 {
 
 }
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: StartServer
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: void StartServer()
+--
+-- RETURNS: void
+--
+-- NOTES: Sets up everything the Server needs to be a server.
+----------------------------------------------------------------------------------------------------------------------*/
 void 
 TCPServer::StartServer()
 {
@@ -52,6 +86,23 @@ TCPServer::StartServer()
 	}
 }
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: ListenForClients
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: void ListenForClients()
+--
+-- RETURNS: void
+--
+-- NOTES: Listens for Clients who may want to connect and gives each its own worker thread.
+----------------------------------------------------------------------------------------------------------------------*/
 void 
 TCPServer::ListenForClients()
 {
@@ -94,6 +145,23 @@ TCPServer::ListenForClients()
 	}
 }
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: readFromSocket
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: void readFromSocket(LPSOCKET_INFORMATION &SI)
+--
+-- RETURNS: void
+--
+-- NOTES: Reads data from the Socket and stores it in SI->DataBuf
+----------------------------------------------------------------------------------------------------------------------*/
 void 
 TCPServer::readFromSocket(LPSOCKET_INFORMATION &SI)
 {
@@ -116,6 +184,23 @@ TCPServer::readFromSocket(LPSOCKET_INFORMATION &SI)
 	}
 }
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: writeToSocket
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: void writeToSocket(LPSOCKET_INFORMATION &SI)
+--
+-- RETURNS: void
+--
+-- NOTES: Writes data to the Socket from SI->DataBuf
+----------------------------------------------------------------------------------------------------------------------*/
 void 
 TCPServer::writeToSocket(LPSOCKET_INFORMATION &SI)
 {

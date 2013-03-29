@@ -1,6 +1,29 @@
 #ifndef TCP_SERVER
 #define TCP_SERVER
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- CLASS: TCPServer
+--
+-- FUNCTIONS: TCPServer* get()
+--            TCPServer()
+--            void StartServer()
+--            void ListenForClients()
+--            void readFromSocket(LPSOCKET_INFORMATION &SI)
+--            void writeToSocket(LPSOCKET_INFORMATION &SI)
+--            SOCKET getSocket()
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- NOTES: This is a TCP client for sending and recieving data.
+-- 
+----------------------------------------------------------------------------------------------------------------------*/
+
 #include <winsock2.h>
 #include <windows.h>
 #include <stdio.h>
