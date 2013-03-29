@@ -1,16 +1,11 @@
-Server Waits for Client Connections
-{
-	Listen for client connections
-	new socket descriptor accepts the client
-	Display IP Address
-}
+Client
+======
 
 Client connects to server
 {
 	Connects to server
 	Display Server name and IP Address
 }
-
 Mic Session Request
 {
 	Get Client Socket descriptor and other resources
@@ -23,6 +18,16 @@ Mic Session Request
 	{
 		Call Mic Session created/initialized function		
 	}
+}
+
+Server
+======
+
+Server Waits for Client Connections
+{
+	Listen for client connections
+	new socket descriptor accepts the client
+	Display IP Address
 }
 
 Process Client Request
@@ -38,10 +43,51 @@ Process Client Request
 	
 }
 
+Both Client & Server
+====================
 Mic Session created/initialized (client/server)
 {	
 	Create one thread that starts (monitoring for data from socket()) 
+	Create a send thread that starts buffering audio and playback
 	Create another thread that starts (monitoring for mic input())
+}
+Monitor Mic Input (thread function) (Both Client/Server)
+{
+
+	if there is an input device
+	while true
+	{
+		Call WavInOpen function
+		store audio in buffer
+		call send audio data/packets function()
+	}	
+}
+Monitor packets for Data (thread function) (Both Client/Server)
+{
+	Initialize Socket Attributes
+	Bind passed in socket
+	while true
+	{
+		If we received something from the socket
+		store packets in buffer
+		The Buffering sound and playback completion callback routine will handle this
+		
+	}
+	close socket descriptor if an error occurred
+}
+Send Audio Data/Packets (Both Client/Server)
+{
+	Get Socket Descriptor and other resources
+	Send to the client/server
+}
+
+Buffering Sound and Playback
+{
+	Pass in Sound Buffer
+
+	if we received something from the buffer and output device is detected
+	Playback audio buffer
+	clear buffer
 }
 
 Create UDP Socket
@@ -54,40 +100,9 @@ Bind Socket
 	Bind UDP Socket
 }
 
-Monitor packets for Data (thread function) (Both Client/Server)
-{
-	Initialize Socket Attributes
-	Bind passed in socket
-	while true
-	{
-		If we received something from the socket
-		store packets in buffer
-		Call Playback Audio() function (possibly get the completion callback function to do this)
-		
-	}
-	close socket descriptor if an error occurred
-}
+
 Playback Audio function
 {
 	if there is an output device
 		Call WaveOutOpen function
-}
-
-
-Monitor Mic Input(Both Client/Server)
-{
-
-	if there is an input device
-	while true
-	{
-		Call WavInOpen function
-		store audio in buffer
-		call send audio data/packets function()
-	}	
-}
-
-Send Audio Data/Packets (Both Client/Server)
-{
-	Get Socket Descriptor and other resources
-	Send to the client/server
 }
