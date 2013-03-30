@@ -20,7 +20,7 @@ typedef struct recvData
 	char recvBuffer[RECV_MAX];
 	SOCKET *sock;
 	sockaddr* dest;
-};
+} RECVDATA, *PRECVDATA;
 
 SOCKET NewUDPSocket();
 SOCKET NewTCPSocket();
@@ -32,5 +32,13 @@ void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpO
 void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv);
 void UDPRead(OVERLAPPED *recvOv);
 int SetReuseAddr(SOCKET* socketfd);
+
+void StartMicSession(SOCKET socketfd);
+int SendMicSessionRequest(SOCKET socketfd);
+int SendAudioData(SOCKET s);
+void CALLBACK PlaybackRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
+
+DWORD WINAPI ListenForPackets(LPVOID lpParameter);
+DWORD WINAPI MonitorMicInput(LPVOID lpParameter);
 
 #endif

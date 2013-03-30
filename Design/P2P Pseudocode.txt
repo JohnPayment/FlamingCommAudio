@@ -48,7 +48,6 @@ Both Client & Server
 Mic Session created/initialized (client/server)
 {	
 	Create one thread that starts (monitoring for data from socket()) 
-	Create a send thread that starts buffering audio and playback
 	Create another thread that starts (monitoring for mic input())
 }
 Monitor Mic Input (thread function) (Both Client/Server)

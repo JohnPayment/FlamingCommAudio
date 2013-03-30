@@ -68,7 +68,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	PAINTSTRUCT ps;
 	RECT        rect;
-     
+    SOCKET UDPSocket;
+	SOCKADDR_IN socketAddr;
+	WSAOVERLAPPED Overlapped;
+
+
 	switch(message)
 	{
 	case WM_CREATE:
@@ -110,11 +114,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		switch(LOWORD(wParam))
 		{
 		case ID_CONNECTMENU_RADIO:
+			//Close P2P
+			//CLose FileTransfer
 			break;
 		case ID_CONNECTMENU_P2P:
-
+			//Close Radio
+			//CLose FileTransfer
+			//send tcp request to server
+			//start p2p udp session
+			//runs the session unitl
+			UDPSocket = NewUDPSocket();
+			BindSocket(&UDPSocket, "localhost", 7000);
 			break;
 		case ID_CONNECTMENU_FILETRANSFER:
+			//Close P2P
+			//Close Radio
 			break;
 		}
 		return 0;

@@ -171,7 +171,6 @@ int BindSocket(SOCKET *socketfd, char* hostname, int port)
 {
 	int nRet;
 	SOCKADDR_IN stLclAddr;
-
 	stLclAddr.sin_family      = AF_INET;
 	stLclAddr.sin_port        = htons(port);
 	hostname == NULL ? stLclAddr.sin_addr.s_addr = htonl(INADDR_ANY) : stLclAddr.sin_addr.s_addr = inet_addr(hostname);
@@ -235,6 +234,7 @@ void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendO
 	assert(WSASendTo(s, &buffer, 1, NULL, 0, dest, sizeof(struct sockaddr), sendOv, UDPRoutine)  == 0 || WSAGetLastError() == WSA_IO_PENDING);
 	memset(buf, 0, BUFLEN);
 }
+
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: UDPRoutine
 --
@@ -283,4 +283,78 @@ int SetReuseAddr(SOCKET* socketfd)
 		printf("setsockopt error: %d\n", WSAGetLastError());
 	}
 	return result;
+}
+
+void StartMicSession(SOCKET socketfd)
+{
+	HANDLE ListenPacketsHandle, MicInputThread;
+	DWORD threadID1, threadID2;
+
+	if((ListenPacketsHandle = CreateThread(NULL, 0, ListenForPackets, (LPVOID) socketfd, 0, &threadID1)) == 0)
+	{
+		MessageBox(NULL, "Listen for Packets thread creation failed", NULL, MB_OK);
+		return;
+	}
+	if((MicInputThread = CreateThread(NULL, 0, MonitorMicInput, (LPVOID) socketfd, 0, &threadID2)) == 0)
+	{
+		MessageBox(NULL, "Monitor for Microphone Input thread creation failed", NULL, MB_OK);
+		return;
+	}
+}
+int SendMicSessionRequest(SOCKET *socketfd, const struct sockaddr *dest, OVERLAPPED *sendOv)
+{
+	char recvBuf[BUFLEN];
+	WSABUF buffer;
+	buffer.buf = recvBuf;
+	buffer.len = BUFLEN;
+	DWORD bytesRecv;
+	int addr_size = sizeof(struct sockaddr);
+	WSAOVERLAPPED recvOv;
+	char reqPacket[BUFLEN] = "-r"; //request flag
+
+	ZeroMemory(&recvOv, sizeof(WSAOVERLAPPED));
+
+	UDPSend(*socketfd, reqPacket, dest, sendOv); //send request
+
+	if(WSARecvFrom(*socketfd, &buffer, 1, &bytesRecv, 0, (PSOCKADDR) dest, &addr_size, &recvOv, UDPRoutine) != 0)
+	{
+		if (WSAGetLastError() != WSA_IO_PENDING)
+         {
+            printf("WSARecv() failed with error %d\n", WSAGetLastError());
+            return -1;
+         }
+	}
+	//if the buffer receives an acknowledgement flag
+	if(strcmp(buffer.buf, "-a") == 0)
+		return 0;
+
+	return -1;
+}
+int SendAudioData(SOCKET s, int deviceID)
+{
+
+	return 0;
+}
+int BufferAndPlaybackSound(SOCKET socketfd)
+{
+	return 0;
+}
+
+void CALLBACK PlaybackRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags)
+{
+
+}
+
+DWORD WINAPI ListenForPackets(LPVOID lpParameter)
+{
+	SOCKET listenSocket = (SOCKET) lpParameter;
+
+
+
+	return 0;
+}
+DWORD WINAPI MonitorMicInput(LPVOID lpParameter)
+{
+	SOCKET Socket = (SOCKET) lpParameter;
+	return 0;
 }
