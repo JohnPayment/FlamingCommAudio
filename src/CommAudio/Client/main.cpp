@@ -7,9 +7,12 @@
 #include "TCPClient.h"
 #include "resource.h"
 
+#define IPSIZE 16
+
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 char outputLine[4096];
+TCPClient* tcp;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     PSTR szCmdLine, int iCmdShow)
@@ -118,17 +121,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			//CLose FileTransfer
 			break;
 		case ID_CONNECTMENU_P2P:
-			//Close Radio
-			//CLose FileTransfer
-			//send tcp request to server
-			//start p2p udp session
-			//runs the session unitl
-			UDPSocket = NewUDPSocket();
-			BindSocket(&UDPSocket, "localhost", 7000);
+			{
+				//Close Radio
+				//CLose FileTransfer
+				//send tcp request to server
+				
+				//start p2p udp session
+				//runs the session unitl
+				UDPSocket = NewUDPSocket();
+				BindSocket(&UDPSocket, "localhost", 7000);
+			}
 			break;
 		case ID_CONNECTMENU_FILETRANSFER:
-			//Close P2P
-			//Close Radio
+			{
+				char ip[IPSIZE];
+				//Close P2P
+				//Close Radio
+				GetWindowText(IPBox, ip, IPSIZE);
+				tcp = new TCPClient(SetDestinationAddr(ip, 5150));
+
+				tcp->StartClient();
+			}
 			break;
 		}
 		return 0;

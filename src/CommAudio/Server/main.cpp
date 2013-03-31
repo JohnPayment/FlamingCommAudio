@@ -20,12 +20,17 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdio.h>
+#include <iostream>
+#include <fstream>
 #include "server.h"
 #include "TCPServer.h"
+
+using namespace std;
 
 void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Overlapped, DWORD InFlags);
 
 int TCPMode;
+ifstream readFile;
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: main
@@ -118,10 +123,23 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		switch(TCPMode)
 		{
 		case 0:
+			// Default. Waiting for commands
 			return;
 		case 1:
+			// Send File Names
 			break;
 		case 2:
+			// File Open. This has its own number because we only want to do it once
+			// test.txt will need to be replaced with a file name received from the client later on
+			readFile.open("test.txt");
+		case 3:
+			// File Transfer
+			readFile.read(SI->Buffer, DATA_BUFSIZE);
+			if(readFile.eof())
+			{
+				readFile.close();
+				TCPMode = 0;
+			}
 			break;
 		}
 		TCPServer::get()->writeToSocket(SI);

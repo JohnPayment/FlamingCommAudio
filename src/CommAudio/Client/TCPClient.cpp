@@ -53,15 +53,15 @@ TCPClient::StartClient()
 	//No usable DLL
 	if(err != 0)
 	{
-		printf ("DLL not found!\n");
-		exit(1);
+		fprintf(stderr, "DLL not found!\n");
+		return;
 	}
 
 	// Create the socket
 	if((_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	{
 		perror("Cannot create socket");
-		exit(1);
+		return;
 	}
 
 	// Connecting to the server
@@ -69,7 +69,7 @@ TCPClient::StartClient()
 	{
 		fprintf(stderr, "Can't connect to server\n");
 		perror("connect");
-		exit(1);
+		return;
 	}
 }
 
