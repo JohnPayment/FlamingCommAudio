@@ -30,7 +30,7 @@ using namespace std;
 void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Overlapped, DWORD InFlags);
 
 int TCPMode;
-ifstream readFile;
+ifstream readFile, songLibrary;
 char fileName[DATA_BUFSIZE];
 
 /*-------------------------------------------------------------------------------------------------------------------- 
@@ -129,14 +129,43 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 	} else if(!strcmp(SI->Buffer, START_TRANSFER))
 	{
 		// Client downloading file
-		TCPMode = 2;
+		TCPMode = 3;
+		//TCPServer::get()->readFromSocket(SI);
 	} else if(!strcmp(SI->Buffer, START_UPLOAD))
 	{
 		// Client Uploading File
-		TCPMode = 4;
+		TCPMode = 5;
 	}else if(!strcmp(SI->Buffer, MICROPHONE))
 	{
 		// Put Code for starting Microphone mode here
+	}
+
+	switch(TCPMode)
+	{
+		case 2: // Waiting for file name
+			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+			break;
+		case 5:
+			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+			TCPMode = 6;
+			break;
+		case 6:
+		{
+				ofstream writeFile(fileName);
+			while(true)
+			{
+				TCPServer::get()->readFromSocket(SI);
+
+				strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+				writeFile << fileName;
+				if(writeFile.eof())
+				{
+					writeFile.close();
+					TCPMode = 0;
+				}
+			}
+		}
+		break;
 	}
 //---------------------------------------------------
 
@@ -147,28 +176,33 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		{
 		// Send File Names
 		case 1:
-			strcpy(SI->Buffer, "GARBAGE");
+			songLibrary.open("songs.txt");
+			songLibrary.read(SI->Buffer, DATA_BUFSIZE);
+			songLibrary.close();
+			TCPMode = 2;
 			break;
 		// Attempt To Open File after getting File Name
-		case 2:
+		case 3:
 			// File Open. This has its own number because we only want to do it once
 			// test.txt will need to be replaced with a file name received from the client later on
 			readFile.open(fileName);
+			//send dater
 			if(readFile.fail())
 			{
+				TCPMode = 2;
 				break;
 			} else
 			{
-				TCPMode = 3;
+				TCPMode = 4;
 			}
 		// Write data from file
-		case 3:
+		case 4:
 			// File Transfer
 			readFile.read(SI->Buffer, DATA_BUFSIZE);
 			if(readFile.eof())
 			{
 				readFile.close();
-				TCPMode = 0;
+				TCPMode = 1;
 			}
 			break;
 		}
@@ -176,34 +210,6 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 	} else
 	{
 		// Reading
-		TCPServer::get()->readFromSocket(SI);
-		switch(TCPMode)
-		{
-		case 1:
-			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
-			TCPMode = 1;
-			break;
-		case 4:
-			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
-			TCPMode = 5;
-			break;
-		case 5:
-			{
-				ofstream writeFile(fileName);
-				while(true)
-				{
-					TCPServer::get()->readFromSocket(SI);
-
-					strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
-					writeFile << fileName;
-					if(writeFile.eof())
-					{
-						writeFile.close();
-						TCPMode = 0;
-					}
-				}
-			}
-			break;
-		}
+		TCPServer::get()->readFromSocket(SI);	
 	}
 }
