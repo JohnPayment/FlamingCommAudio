@@ -31,6 +31,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 
 int TCPMode;
 ifstream readFile;
+char fileName[DATA_BUFSIZE];
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: main
@@ -120,18 +121,27 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 
 	if(SI->BytesRECV > SI->BytesSEND)
 	{
+		// Writing
 		switch(TCPMode)
 		{
 		case 0:
-			// Default. Waiting for commands
+			
 			return;
 		case 1:
 			// Send File Names
+			TCPMode = 2;
 			break;
 		case 2:
 			// File Open. This has its own number because we only want to do it once
 			// test.txt will need to be replaced with a file name received from the client later on
-			readFile.open("test.txt");
+			readFile.open(fileName);
+			if(readFile.fail())
+			{
+				break;
+			} else
+			{
+				TCPMode = 3;
+			}
 		case 3:
 			// File Transfer
 			readFile.read(SI->Buffer, DATA_BUFSIZE);
@@ -145,6 +155,53 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		TCPServer::get()->writeToSocket(SI);
 	} else
 	{
+		// Reading
 		TCPServer::get()->readFromSocket(SI);
+		switch(TCPMode)
+		{
+		case 1:
+			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+			TCPMode = 1;
+			break;
+		case 4:
+			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+			TCPMode = 5;
+			break;
+		case 5:
+			{
+				ofstream writeFile(fileName);
+				while(true)
+				{
+					TCPServer::get()->readFromSocket(SI);
+
+					strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+					writeFile << fileName;
+					if(writeFile.eof())
+					{
+						writeFile.close();
+						TCPMode = 0;
+					}
+				}
+			}
+			break;
+		}
+
+		if(!strcmp(SI->Buffer, FILE_TRANSFER))
+		{
+			// We want to send A list of names
+			TCPServer::get()->readFromSocket(SI);
+			if(!strcmp(SI->Buffer, START_TRANSFER))
+			{
+				// Client downloading file
+				TCPMode = 1;
+			} else if(!strcmp(SI->Buffer, START_UPLOAD))
+			{
+				// Client Uploading File
+				TCPMode = 4;
+			}
+		} else if(!strcmp(SI->Buffer, MICROPHONE))
+		{
+			// Put Code for starting Microphone mode here
+		}
 	}
 }

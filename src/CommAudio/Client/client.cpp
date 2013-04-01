@@ -23,8 +23,13 @@
 -- Holds the code that will run the server side of the application.
 ----------------------------------------------------------------------------------------------------------------------*/
 #include "client.h"
+#include "libzplay.h"
 #pragma comment(lib, "ws2_32.lib")
-
+#pragma comment(lib, "libzplay.lib")
+using namespace libZPlay;
+using namespace std;
+ZPlay* player;
+string firstframe;
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: ClientMulticastThread
 --
@@ -52,12 +57,18 @@ void WINAPI ClientMulticastThread()
 	char output[BUFLEN];
 	char recvBuf[RECV_MAX];
 	struct sockaddr SenderAddr;
-	DWORD BytesRead, Flags = 0;
+	bool firsttime = true;
+	DWORD BytesRead = 0, BytesWritten, Flags = 0;
 	int result, SenderAddrLen = sizeof(SenderAddr);
 	buf.len = RECV_MAX;
 	buf.buf = recvBuf;
+	player = CreateZPlay();
+	player->Play();
+	
+	
 	memset(recvBuf, 0, sizeof(recvBuf));
 	ZeroMemory(&recvOv, sizeof(WSAOVERLAPPED));
+
 
 	//Create WSAEvent for overlapped struct
 	if((recvOv.hEvent = WSACreateEvent()) == NULL)
@@ -97,23 +108,50 @@ void WINAPI ClientMulticastThread()
 		sprintf(output, "JoinMulticast error: %d\n", WSAGetLastError());
 		MessageBox(NULL, output, "Error", NULL);
 	}
-
-	// This is temporary
-	HANDLE hFile = CreateFile("test.txt", GENERIC_WRITE, NULL, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if(hFile == INVALID_HANDLE_VALUE)
-		return;
-
-	while(TRUE)
+	
+	while(true)
 	{
-		WSARecvFrom(recvSocket, &buf, 1, &BytesRead, &Flags, &SenderAddr, &SenderAddrLen, &recvOv, UDPRoutine);
-		if((result = WSAWaitForMultipleEvents(1, &recvOv.hEvent, TRUE, INFINITE, TRUE)) == WSA_WAIT_FAILED)
+		//Blocking call to the socket. This is needed to keep the client in sync.
+		if((BytesRead = recvfrom(recvSocket, recvBuf, RECV_MAX, 0, NULL, NULL)) > 0 )
 		{
-			break;
-		} else
-		{
-			// HERE IS WHERE wE PROCESS THE DATA
-			WriteFile(hFile, buf.buf, strlen(buf.buf), &BytesRead, NULL);
+			firstframe.append(recvSocket, BytesRead);	
 		}
+		//Wait for a valid MP3 packet
+ 		while(!player->OpenStream(1, 1, firstframe.data(), firstframe.size(), sfMp3))
+		{
 			
+			result = WSARecvFrom(recvSocket, &buf, 1, &BytesRead, &Flags, &SenderAddr, &SenderAddrLen, &recvOv, UDPRoutine);
+			if((result = WSAWaitForMultipleEvents(1, &recvOv.hEvent, TRUE, INFINITE, TRUE)) == WSA_WAIT_FAILED)
+			{
+			break;
+			} else
+			{
+				firstframe.append(buf.buf, BytesRead);	
+			}
+			
+		}
+		player->Play();
+		//Keep recieving data.
+		while(true)
+		{
+			TStreamStatus status;
+			player->GetStatus(&status);
+			if(status.fPlay == 0)
+			{
+				MessageBox(NULL, "Song Over", "", NULL);
+				break; // song over, go wait for a new song back at the top.
+			}
+
+			result = WSARecvFrom(recvSocket, &buf, 1, &BytesRead, &Flags, &SenderAddr, &SenderAddrLen, &recvOv, UDPRoutine);
+			if((result = WSAWaitForMultipleEvents(1, &recvOv.hEvent, TRUE, INFINITE, TRUE)) == WSA_WAIT_FAILED)
+			{
+				break;
+			} else
+			{
+				player->PushDataToStream(buf.buf, BytesRead);
+			}
+
+		}
 	}
+			
 }

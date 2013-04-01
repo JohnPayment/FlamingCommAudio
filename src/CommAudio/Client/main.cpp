@@ -6,12 +6,18 @@
 #include "client.h"
 #include "TCPClient.h"
 #include "resource.h"
+#include <iostream>
+#include <fstream>
+
+using namespace std;
 
 #define IPSIZE 16
 
+void writeFileFromNetwork(char* fileName, TCPClient* client);
+
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-char outputLine[4096];
+char outputLine[BUFFER_SIZE];
 TCPClient* tcp;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -122,6 +128,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CONNECTMENU_P2P:
 			{
+				if(tcp != NULL)
+				{
+					delete tcp;
+				}
+
+				char ip[IPSIZE];
+				GetWindowText(IPBox, ip, IPSIZE);
+				tcp = new TCPClient(SetDestinationAddr(ip, 5150));
+				tcp->StartClient();
+				tcp->writeToSocket(MICROPHONE);
 				//Close Radio
 				//CLose FileTransfer
 				//send tcp request to server
@@ -134,6 +150,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CONNECTMENU_FILETRANSFER:
 			{
+				if(tcp != NULL)
+				{
+					delete tcp;
+				}
 				char ip[IPSIZE];
 				//Close P2P
 				//Close Radio
@@ -141,13 +161,79 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				tcp = new TCPClient(SetDestinationAddr(ip, 5150));
 
 				tcp->StartClient();
+				tcp->writeToSocket(FILE_TRANSFER);
+
+				tcp->readFromSocket(outputLine);
 			}
 			break;
+		case ID_POST_FILENAME:
+			if(tcp != NULL)
+			{
+				tcp->writeToSocket(START_TRANSFER);
+				char fileName[BUFFER_SIZE];
+				char response[BUFFER_SIZE];
+				GetWindowText(FileNameBox, fileName, BUFFER_SIZE);
+				// Sending fileName to server
+				tcp->writeToSocket(fileName);
+
+				// Storing response
+				tcp->readFromSocket(response);
+				if(!strcmp(response, START_TRANSFER))
+				{
+					// Start writing file
+				}
+			}
+			break;
+		case ID_POST_UPLOAD:
+			if(tcp != NULL)
+			{
+				tcp->writeToSocket(START_UPLOAD);
+				char fileName[BUFFER_SIZE];
+				char data[BUFFER_SIZE];
+				GetWindowText(FileNameBox, fileName, BUFFER_SIZE);
+				// Sending fileName to server
+				tcp->writeToSocket(fileName);
+
+				ifstream readFile;
+				readFile.open(fileName);
+
+				// File Transfer
+				while(true)
+				{
+					readFile.read(data, BUFFER_SIZE);
+					tcp->writeToSocket(data);
+
+					if(readFile.eof())
+					{
+						readFile.close();
+						break;
+					}
+				}
+				break;
+			}
 		}
 		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		return 0;
 	}
-return DefWindowProc(hwnd, message, wParam, lParam);
+
+	return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+void writeFileFromNetwork(char* fileName, TCPClient* client)
+{
+	ofstream file(fileName);
+	char fileChunk[BUFFER_SIZE];
+
+	while(true)
+	{
+		client->readFromSocket(fileChunk);
+		file << fileChunk;
+		if(file.eof())
+		{
+			file.close();
+			break;
+		}
+	}
 }
