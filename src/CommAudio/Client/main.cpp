@@ -15,7 +15,7 @@ using namespace std;
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-char outputLine[4096];
+char outputLine[BUFFER_SIZE];
 TCPClient* tcp;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -160,6 +160,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				tcp->StartClient();
 				tcp->writeToSocket(FILE_TRANSFER);
+
+				tcp->readFromSocket(outputLine);
 			}
 			break;
 		case ID_POST_FILENAME:
