@@ -148,6 +148,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		{
 		// Send File Names
 		case 1:
+			strcpy(SI->Buffer, "GARBAGE");
 			TCPMode = 2;
 			break;
 		// Attempt To Open File after getting File Name
