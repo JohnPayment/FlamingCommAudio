@@ -6,6 +6,10 @@
 #include "client.h"
 #include "TCPClient.h"
 #include "resource.h"
+#include <iostream>
+#include <fstream>
+
+using namespace std;
 
 #define IPSIZE 16
 
@@ -183,4 +187,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 
 	return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+void writeFileFromNetwork(char* fileName, TCPClient* client)
+{
+	ofstream file(fileName);
+	char fileChunk[BUFFER_SIZE];
+
+	while(true)
+	{
+		client->readFromSocket(fileChunk);
+		file << fileChunk;
+		if(file.eof())
+		{
+			file.close();
+			break;
+		}
+	}
 }
