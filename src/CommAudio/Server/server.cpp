@@ -88,7 +88,7 @@ void RunMulticast()
 
 	ZeroMemory(&sendOv, sizeof(OVERLAPPED));
 
-	hFile = CreateFile("test.txt", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	hFile = CreateFile("test.mp3", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	memset(buffer, 0, BUFLEN);
 	nRet = WSAStartup(0x0202, &stWSAData);
@@ -107,11 +107,11 @@ void RunMulticast()
 	stDstAddr = SetDestinationAddr(achMCAddr, nPort);
 
 	_getch();
-	while(ReadFromFile(hFile, buffer))
+	while((i= ReadFromFile(hFile, buffer)))
 	{
 		printf("Sending...");
-		UDPSend(socketfd, buffer, (struct sockaddr*) &stDstAddr, &sendOv);
-		Sleep(1000);
+		UDPSend(socketfd, buffer, (struct sockaddr*) &stDstAddr, &sendOv, i);
+		Sleep(20);
 	}
 
 	closesocket(socketfd);
