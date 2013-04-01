@@ -169,6 +169,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_POST_FILENAME:
 			if(tcp != NULL)
 			{
+				tcp->writeToSocket(START_TRANSFER);
 				char fileName[BUFFER_SIZE];
 				char response[BUFFER_SIZE];
 				GetWindowText(FileNameBox, fileName, BUFFER_SIZE);
@@ -183,7 +184,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 			}
 			break;
-			case ID_POST_UPLOAD:
+		case ID_POST_UPLOAD:
 			if(tcp != NULL)
 			{
 				tcp->writeToSocket(START_UPLOAD);

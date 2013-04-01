@@ -121,6 +121,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 
 	if(SI->BytesRECV > SI->BytesSEND)
 	{
+		// Writing
 		switch(TCPMode)
 		{
 		case 0:
@@ -154,17 +155,50 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		TCPServer::get()->writeToSocket(SI);
 	} else
 	{
+		// Reading
 		TCPServer::get()->readFromSocket(SI);
-		if(TCPMode == 1)
+		switch(TCPMode)
 		{
+		case 1:
 			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
 			TCPMode = 1;
+			break;
+		case 4:
+			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+			TCPMode = 5;
+			break;
+		case 5:
+			{
+				ofstream writeFile(fileName);
+				while(true)
+				{
+					TCPServer::get()->readFromSocket(SI);
+
+					strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+					writeFile << fileName;
+					if(writeFile.eof())
+					{
+						writeFile.close();
+						TCPMode = 0;
+					}
+				}
+			}
+			break;
 		}
 
 		if(!strcmp(SI->Buffer, FILE_TRANSFER))
 		{
 			// We want to send A list of names
-			TCPMode = 1;
+			TCPServer::get()->readFromSocket(SI);
+			if(!strcmp(SI->Buffer, START_TRANSFER))
+			{
+				// Client downloading file
+				TCPMode = 1;
+			} else if(!strcmp(SI->Buffer, START_UPLOAD))
+			{
+				// Client Uploading File
+				TCPMode = 4;
+			}
 		} else if(!strcmp(SI->Buffer, MICROPHONE))
 		{
 			// Put Code for starting Microphone mode here
