@@ -125,17 +125,16 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 	if(!strcmp(SI->Buffer, FILE_TRANSFER))
 	{
 		// We want to send A list of names
-		TCPServer::get()->readFromSocket(SI);
-		if(!strcmp(SI->Buffer, START_TRANSFER))
-		{
-			// Client downloading file
-			TCPMode = 1;
-		} else if(!strcmp(SI->Buffer, START_UPLOAD))
-		{
-			// Client Uploading File
-			TCPMode = 4;
-		}
-	} else if(!strcmp(SI->Buffer, MICROPHONE))
+		TCPMode = 1;
+	} else if(!strcmp(SI->Buffer, START_TRANSFER))
+	{
+		// Client downloading file
+		TCPMode = 2;
+	} else if(!strcmp(SI->Buffer, START_UPLOAD))
+	{
+		// Client Uploading File
+		TCPMode = 4;
+	}else if(!strcmp(SI->Buffer, MICROPHONE))
 	{
 		// Put Code for starting Microphone mode here
 	}
@@ -149,7 +148,6 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		// Send File Names
 		case 1:
 			strcpy(SI->Buffer, "GARBAGE");
-			TCPMode = 2;
 			break;
 		// Attempt To Open File after getting File Name
 		case 2:
