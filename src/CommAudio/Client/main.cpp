@@ -130,6 +130,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				//runs the session unitl
 				UDPSocket = NewUDPSocket();
 				BindSocket(&UDPSocket, "localhost", 7000);
+
+
 			}
 			break;
 		case ID_CONNECTMENU_FILETRANSFER:

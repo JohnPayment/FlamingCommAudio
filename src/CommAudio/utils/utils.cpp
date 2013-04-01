@@ -29,7 +29,8 @@
 ----------------------------------------------------------------------------------------------------------------------*/
 #include "utils.h"
 using namespace std;
-#pragma comment(lib, "ws2_32.lib")
+
+using namespace libZPlay;
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: NewUDPSocket
 --
@@ -330,31 +331,34 @@ int SendMicSessionRequest(SOCKET *socketfd, const struct sockaddr *dest, OVERLAP
 
 	return -1;
 }
-int SendAudioData(SOCKET s, int deviceID)
-{
 
-	return 0;
-}
 int BufferAndPlaybackSound(SOCKET socketfd)
 {
 	return 0;
 }
 
-void CALLBACK PlaybackRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags)
+int __stdcall PlaybackRoutine(void* instance, void *user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
 
+	return 0;
 }
-
 DWORD WINAPI ListenForPackets(LPVOID lpParameter)
 {
 	SOCKET listenSocket = (SOCKET) lpParameter;
 
+	while(true)
+	{
 
-
+	}
 	return 0;
 }
 DWORD WINAPI MonitorMicInput(LPVOID lpParameter)
 {
 	SOCKET Socket = (SOCKET) lpParameter;
+
+	while(true)
+	{
+
+	}
 	return 0;
 }
