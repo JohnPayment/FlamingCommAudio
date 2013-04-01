@@ -22,7 +22,6 @@
 ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "server.h"
-
 #pragma comment(lib, "ws2_32.lib")
 using namespace std;
 string achMCAddr		   = TIMECAST_ADDR;
@@ -31,7 +30,7 @@ u_short nPort              = TIMECAST_PORT;
 u_long  lTTL               = TIMECAST_TTL;
 bool bQuit;
 OVERLAPPED sendOv;
-
+void OpenWinFile(HANDLE* hFile, string name);
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: DisableLoopback
 --
@@ -83,12 +82,13 @@ void RunMulticast()
 	SOCKADDR_IN stDstAddr;
 	SOCKET socketfd;
 	WSADATA stWSAData;
-	HANDLE hFile;
+	ifstream songFile;
 	char buffer[BUFLEN];
-
 	ZeroMemory(&sendOv, sizeof(OVERLAPPED));
-
-	hFile = CreateFile("test.mp3", GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	int currentSong = 1;
+	string songName;
+	HANDLE hFile;
+	bool backToStart = false;
 
 	memset(buffer, 0, BUFLEN);
 	nRet = WSAStartup(0x0202, &stWSAData);
@@ -107,16 +107,48 @@ void RunMulticast()
 	stDstAddr = SetDestinationAddr(achMCAddr, nPort);
 
 	_getch();
-	while((i= ReadFromFile(hFile, buffer)))
+	while(true) // main loop for choosing song from library
 	{
-		printf("Sending...");
-		UDPSend(socketfd, buffer, (struct sockaddr*) &stDstAddr, &sendOv, i);
-		Sleep(20);
+		songFile.open("songs.txt");
+		
+		for(int i = 0; i < currentSong; i++) // will loop until the current number
+		{
+			getline(songFile, songName);
+			cout << songName << endl;
+		}
+		if(songFile.eof())
+		{
+			backToStart = true;
+		}
+		songFile.close();
+		OpenWinFile(&hFile, songName);
+		while((i= ReadFromFile(hFile, buffer))) // sending a song
+		{
+			UDPSend(socketfd, buffer, (struct sockaddr*) &stDstAddr, &sendOv, i);
+			Sleep(20);
+		}
+		CloseHandle(hFile);
+		if(backToStart)
+		{
+			currentSong = 1;
+			backToStart = false;
+		}else
+		{
+			currentSong++;
+		}
 	}
+	
 
 	closesocket(socketfd);
 }
-
+void OpenWinFile(HANDLE* hFile, string name)
+{
+	*hFile = CreateFile(name.c_str(), GENERIC_READ, NULL, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if(hFile == INVALID_HANDLE_VALUE)
+	{
+		printf("Error opening Song. Ernum: %d,", GetLastError);
+	}
+}
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: SetTimeToLive
 --

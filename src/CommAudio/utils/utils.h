@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <conio.h>
 #include <cassert>
+#include <fstream>
+#include <iostream>
 
 #define BUFLEN 1024
 #define RECV_MAX 2048
