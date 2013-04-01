@@ -9,9 +9,13 @@
 #include <cstdlib>
 #include <conio.h>
 #include <cassert>
+
 #include <libzplay.h>
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "libzplay.lib")
+
+#include <fstream>
+#include <iostream>
 
 #define BUFLEN 1024
 #define RECV_MAX 2048
@@ -32,7 +36,7 @@ int JoinMulticast(SOCKET *socketfd, std::string achMcAddr);
 int BindSocket(SOCKET *socketfd, char* hostname, int port);
 int ReadFromFile(HANDLE hFile, char* buffer);
 void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
-void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv);
+void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv, int length);
 void UDPRead(OVERLAPPED *recvOv);
 int SetReuseAddr(SOCKET* socketfd);
 

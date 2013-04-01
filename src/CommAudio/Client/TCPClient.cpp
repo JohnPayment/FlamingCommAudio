@@ -79,35 +79,24 @@ TCPClient::StartClient()
 -- DATE: 2013/03/25
 --
 -- REVISIONS: (Date and Description)
+--			Chagne to make a single call to recv, instead of loop. 
+--			Jesse Wright, John Payment
 --
 -- DESIGNER: John Payment
 --
 -- PROGRAMMER: John Payment
 --
--- INTERFACE: void readFromSocket(char* buffer)
+-- INTERFACE: int readFromSocket(char* buffer)
 --                 char* buffer - A pointer to a character buffer. It must be at least as large as BUFFER_SIZE
 --
--- RETURNS: void
+-- RETURNS: int
 --
--- NOTES: Reads from the socket to buffer.
+-- NOTES: Wrapper to read from the socket to buffer. 
 ----------------------------------------------------------------------------------------------------------------------*/
-void 
+int 
 TCPClient::readFromSocket(char* buffer)
 {
-	int n = 0;
-	int bufferCapacity = BUFFER_SIZE;
-
-	// client makes repeated calls to recv until no more data is expected to arrive.
-	while((n = recv(_socket, buffer, bufferCapacity, 0)) < BUFFER_SIZE)
-	{
-		DWORD temp = GetLastError();
-		buffer += n;
-		bufferCapacity -= n;
-		if(n == 0)
-		{
-			break;
-		}
-	}
+	return recv(_socket, buffer, BUFFER_SIZE, 0);
 }
 
 /*--------------------------------------------------------------------------------------------------------------------

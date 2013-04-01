@@ -30,7 +30,8 @@ using namespace std;
 void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Overlapped, DWORD InFlags);
 
 int TCPMode;
-ifstream readFile;
+ifstream readFile, songLibrary;
+char fileName[DATA_BUFSIZE];
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: main
@@ -52,10 +53,11 @@ ifstream readFile;
 ----------------------------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[]) 
 {
-	TCPMode = 0;
+	TCPMode = 1;
 
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
+	TCPServer::get()->ListenForClients();
 	RunMulticast();
 	WSACleanup();
 
@@ -118,33 +120,96 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		SI->BytesSEND += BytesTransferred;
 	}
 
+//-------------------------------------------------
+	// Setting the initial connection mode
+	if(!strcmp(SI->Buffer, FILE_TRANSFER))
+	{
+		// We want to send A list of names
+		TCPMode = 1;
+	} else if(!strcmp(SI->Buffer, START_TRANSFER))
+	{
+		// Client downloading file
+		TCPMode = 3;
+		//TCPServer::get()->readFromSocket(SI);
+	} else if(!strcmp(SI->Buffer, START_UPLOAD))
+	{
+		// Client Uploading File
+		TCPMode = 5;
+	}else if(!strcmp(SI->Buffer, MICROPHONE))
+	{
+		// Put Code for starting Microphone mode here
+	}
+
+	switch(TCPMode)
+	{
+		case 2: // Waiting for file name
+			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+			break;
+		case 5:
+			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+			TCPMode = 6;
+			break;
+		case 6:
+		{
+				ofstream writeFile(fileName);
+			while(true)
+			{
+				TCPServer::get()->readFromSocket(SI);
+
+				strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+				writeFile << fileName;
+				if(writeFile.eof())
+				{
+					writeFile.close();
+					TCPMode = 0;
+				}
+			}
+		}
+		break;
+	}
+//---------------------------------------------------
+
 	if(SI->BytesRECV > SI->BytesSEND)
 	{
+		// Writing
 		switch(TCPMode)
 		{
-		case 0:
-			// Default. Waiting for commands
-			return;
+		// Send File Names
 		case 1:
-			// Send File Names
+			songLibrary.open("songs.txt");
+			songLibrary.read(SI->Buffer, DATA_BUFSIZE);
+			songLibrary.close();
+			TCPMode = 2;
 			break;
-		case 2:
+		// Attempt To Open File after getting File Name
+		case 3:
 			// File Open. This has its own number because we only want to do it once
 			// test.txt will need to be replaced with a file name received from the client later on
-			readFile.open("test.txt");
-		case 3:
+			readFile.open(fileName);
+			//send dater
+			if(readFile.fail())
+			{
+				TCPMode = 2;
+				break;
+			} else
+			{
+				TCPMode = 4;
+			}
+		// Write data from file
+		case 4:
 			// File Transfer
 			readFile.read(SI->Buffer, DATA_BUFSIZE);
 			if(readFile.eof())
 			{
 				readFile.close();
-				TCPMode = 0;
+				TCPMode = 1;
 			}
 			break;
 		}
 		TCPServer::get()->writeToSocket(SI);
 	} else
 	{
-		TCPServer::get()->readFromSocket(SI);
+		// Reading
+		TCPServer::get()->readFromSocket(SI);	
 	}
 }

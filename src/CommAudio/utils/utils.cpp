@@ -227,11 +227,11 @@ int ReadFromFile(HANDLE hFile, char* buffer)
 --
 -- NOTES: Wrapper for sending the buffer data to a UDP Socket
 ----------------------------------------------------------------------------------------------------------------------*/
-void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv)
+void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv, int length)
 {
 	WSABUF buffer;
 	buffer.buf = buf;
-	buffer.len = strlen(buf);
+	buffer.len = length;
 	assert(WSASendTo(s, &buffer, 1, NULL, 0, dest, sizeof(struct sockaddr), sendOv, UDPRoutine)  == 0 || WSAGetLastError() == WSA_IO_PENDING);
 	memset(buf, 0, BUFLEN);
 }
@@ -315,7 +315,7 @@ int SendMicSessionRequest(SOCKET *socketfd, const struct sockaddr *dest, OVERLAP
 
 	ZeroMemory(&recvOv, sizeof(WSAOVERLAPPED));
 
-	UDPSend(*socketfd, reqPacket, dest, sendOv); //send request
+	UDPSend(*socketfd, reqPacket, dest, sendOv, 3); //send request
 
 	if(WSARecvFrom(*socketfd, &buffer, 1, &bytesRecv, 0, (PSOCKADDR) dest, &addr_size, &recvOv, UDPRoutine) != 0)
 	{

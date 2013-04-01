@@ -106,7 +106,7 @@ TCPServer::StartServer()
 void 
 TCPServer::ListenForClients()
 {
-	DWORD threadId;
+	DWORD threadId = 0;
 	WSAEVENT acceptEvent;
 	HANDLE threadHandle;
 
@@ -165,7 +165,7 @@ TCPServer::ListenForClients()
 void 
 TCPServer::readFromSocket(LPSOCKET_INFORMATION &SI)
 {
-	DWORD recieveBytes;
+	DWORD recieveBytes = 0;
 	DWORD flags = 0;
 
 	SI->BytesRECV = 0;
@@ -204,7 +204,7 @@ TCPServer::readFromSocket(LPSOCKET_INFORMATION &SI)
 void 
 TCPServer::writeToSocket(LPSOCKET_INFORMATION &SI)
 {
-	DWORD sendBytes;
+	DWORD sendBytes = 0;
 
 	ZeroMemory(&(SI->Overlapped), sizeof(WSAOVERLAPPED));
 
@@ -229,8 +229,8 @@ TCPServer::getSocket()
 DWORD WINAPI WorkerThread(LPVOID lpParameter)
 {
 	DWORD flags = 0;
-	DWORD index;
-	DWORD bytesRecieved;
+	DWORD index = 0;
+	DWORD bytesRecieved = 0;
 
 	LPSOCKET_INFORMATION SocketInfo;
 	WSAEVENT eventArray[1];
