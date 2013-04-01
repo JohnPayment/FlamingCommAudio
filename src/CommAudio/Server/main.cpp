@@ -53,10 +53,11 @@ char fileName[DATA_BUFSIZE];
 ----------------------------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[]) 
 {
-	TCPMode = 0;
+	TCPMode = 1;
 
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
+	TCPServer::get()->ListenForClients();
 	RunMulticast();
 	WSACleanup();
 
@@ -119,18 +120,37 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		SI->BytesSEND += BytesTransferred;
 	}
 
+//-------------------------------------------------
+	// Setting the initial connection mode
+	if(!strcmp(SI->Buffer, FILE_TRANSFER))
+	{
+		// We want to send A list of names
+		TCPServer::get()->readFromSocket(SI);
+		if(!strcmp(SI->Buffer, START_TRANSFER))
+		{
+			// Client downloading file
+			TCPMode = 1;
+		} else if(!strcmp(SI->Buffer, START_UPLOAD))
+		{
+			// Client Uploading File
+			TCPMode = 4;
+		}
+	} else if(!strcmp(SI->Buffer, MICROPHONE))
+	{
+		// Put Code for starting Microphone mode here
+	}
+//---------------------------------------------------
+
 	if(SI->BytesRECV > SI->BytesSEND)
 	{
 		// Writing
 		switch(TCPMode)
 		{
-		case 0:
-			
-			return;
+		// Send File Names
 		case 1:
-			// Send File Names
 			TCPMode = 2;
 			break;
+		// Attempt To Open File after getting File Name
 		case 2:
 			// File Open. This has its own number because we only want to do it once
 			// test.txt will need to be replaced with a file name received from the client later on
@@ -142,6 +162,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 			{
 				TCPMode = 3;
 			}
+		// Write data from file
 		case 3:
 			// File Transfer
 			readFile.read(SI->Buffer, DATA_BUFSIZE);
@@ -184,24 +205,6 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 				}
 			}
 			break;
-		}
-
-		if(!strcmp(SI->Buffer, FILE_TRANSFER))
-		{
-			// We want to send A list of names
-			TCPServer::get()->readFromSocket(SI);
-			if(!strcmp(SI->Buffer, START_TRANSFER))
-			{
-				// Client downloading file
-				TCPMode = 1;
-			} else if(!strcmp(SI->Buffer, START_UPLOAD))
-			{
-				// Client Uploading File
-				TCPMode = 4;
-			}
-		} else if(!strcmp(SI->Buffer, MICROPHONE))
-		{
-			// Put Code for starting Microphone mode here
 		}
 	}
 }
