@@ -164,7 +164,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				tcp->writeToSocket(FILE_TRANSFER);
 
 				tcp->readFromSocket(outputLine);
-				InvalidateRect(hwnd, *rect, true);
+				InvalidateRect(hwnd, &rect, true);
 			}
 			break;
 		case ID_POST_FILENAME:
