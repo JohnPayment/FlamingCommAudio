@@ -29,6 +29,10 @@
 #define SERVER_TCP_PORT 5150
 #define BUFFER_SIZE     8192
 
+#define FILE_TRANSFER "F"
+#define START_TRANSFER "S"
+#define MICROPHONE "M"
+
 class TCPClient
 {
 public:

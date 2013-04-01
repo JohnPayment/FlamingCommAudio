@@ -31,6 +31,10 @@
 #define PORT 5150
 #define DATA_BUFSIZE 8192
 
+#define FILE_TRANSFER "F"
+#define START_TRANSFER "S"
+#define MICROPHONE "M"
+
 typedef struct _SOCKET_INFORMATION 
 {
 	OVERLAPPED Overlapped;

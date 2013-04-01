@@ -31,6 +31,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 
 int TCPMode;
 ifstream readFile;
+char fileName[DATA_BUFSIZE];
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: main
@@ -123,7 +124,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		switch(TCPMode)
 		{
 		case 0:
-			// Default. Waiting for commands
+			
 			return;
 		case 1:
 			// Send File Names
@@ -131,7 +132,14 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		case 2:
 			// File Open. This has its own number because we only want to do it once
 			// test.txt will need to be replaced with a file name received from the client later on
-			readFile.open("test.txt");
+			readFile.open(fileName);
+			if(readFile.fail())
+			{
+				break;
+			} else
+			{
+				TCPMode = 3;
+			}
 		case 3:
 			// File Transfer
 			readFile.read(SI->Buffer, DATA_BUFSIZE);
@@ -146,5 +154,19 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 	} else
 	{
 		TCPServer::get()->readFromSocket(SI);
+		if(TCPMode == 1)
+		{
+			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+			TCPMode = 1;
+		}
+
+		if(!strcmp(SI->Buffer, FILE_TRANSFER))
+		{
+			// We want to send A list of names
+			TCPMode = 1;
+		} else if(!strcmp(SI->Buffer, MICROPHONE))
+		{
+			// Put Code for starting Microphone mode here
+		}
 	}
 }

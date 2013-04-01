@@ -122,6 +122,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CONNECTMENU_P2P:
 			{
+				if(tcp != NULL)
+				{
+					delete tcp;
+				}
+
+				char ip[IPSIZE];
+				GetWindowText(IPBox, ip, IPSIZE);
+				tcp = new TCPClient(SetDestinationAddr(ip, 5150));
+				tcp->StartClient();
+				tcp->writeToSocket(MICROPHONE);
 				//Close Radio
 				//CLose FileTransfer
 				//send tcp request to server
@@ -134,6 +144,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CONNECTMENU_FILETRANSFER:
 			{
+				if(tcp != NULL)
+				{
+					delete tcp;
+				}
 				char ip[IPSIZE];
 				//Close P2P
 				//Close Radio
@@ -141,6 +155,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				tcp = new TCPClient(SetDestinationAddr(ip, 5150));
 
 				tcp->StartClient();
+				tcp->writeToSocket(FILE_TRANSFER);
+			}
+			break;
+		case ID_POST_FILENAME:
+			if(tcp != NULL)
+			{
+				char fileName[BUFFER_SIZE];
+				char response[BUFFER_SIZE];
+				GetWindowText(FileNameBox, fileName, BUFFER_SIZE);
+				// Sending fileName to server
+				tcp->writeToSocket(fileName);
+
+				// Storing response
+				tcp->readFromSocket(response);
+				if(!strcmp(response, START_TRANSFER))
+				{
+					// Start writing file
+				}
 			}
 			break;
 		}
@@ -149,5 +181,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		return 0;
 	}
-return DefWindowProc(hwnd, message, wParam, lParam);
+
+	return DefWindowProc(hwnd, message, wParam, lParam);
 }
