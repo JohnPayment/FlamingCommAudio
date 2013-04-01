@@ -74,7 +74,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	HDC         hdc;
 	static HWND IPBox;
 	static HWND FileNameBox;
-
+	int BytesRead = 0;
 	PAINTSTRUCT ps;
 	RECT        rect;
     SOCKET UDPSocket;
@@ -114,7 +114,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		lables.top = 100;
 		lables.bottom = 290;
-		DrawText(hdc, outputLine, -1, &lables, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
+		DrawText(hdc, outputLine, -1, &lables,  DT_CENTER | DT_VCENTER);
 		  
 		EndPaint(hwnd, &ps);
 		return 0;
@@ -163,11 +163,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				tcp->StartClient();
 				tcp->writeToSocket(FILE_TRANSFER);
 
-				tcp->readFromSocket(outputLine);
-				InvalidateRect(hwnd, &rect, true);
+				BytesRead = tcp->readFromSocket(outputLine);
+				if(BytesRead > 0)
+				{
+					InvalidateRect(hwnd, NULL, true);
+					UpdateWindow(hwnd);
+				}
 			}
 			break;
-		case ID_POST_FILENAME:
+		case ID_POST_FILENAME: // DOWNLOAD
 			if(tcp != NULL)
 			{
 				tcp->writeToSocket(START_TRANSFER);

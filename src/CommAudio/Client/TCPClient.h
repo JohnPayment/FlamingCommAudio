@@ -41,7 +41,7 @@ public:
 
 	void StartClient();
 
-	void readFromSocket(char* buffer);
+	int readFromSocket(char* buffer);
 	int writeToSocket(char* buffer);
 
 	void closeSocket();
