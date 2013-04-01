@@ -31,6 +31,7 @@
 
 #define FILE_TRANSFER "F"
 #define START_TRANSFER "S"
+#define START_UPLOAD "U"
 #define MICROPHONE "M"
 
 class TCPClient

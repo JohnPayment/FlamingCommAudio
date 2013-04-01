@@ -128,6 +128,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 			return;
 		case 1:
 			// Send File Names
+			TCPMode = 2;
 			break;
 		case 2:
 			// File Open. This has its own number because we only want to do it once

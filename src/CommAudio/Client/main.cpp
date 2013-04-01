@@ -13,6 +13,8 @@ using namespace std;
 
 #define IPSIZE 16
 
+void writeFileFromNetwork(char* fileName, TCPClient* client);
+
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 char outputLine[BUFFER_SIZE];
@@ -181,6 +183,33 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 			}
 			break;
+			case ID_POST_UPLOAD:
+			if(tcp != NULL)
+			{
+				tcp->writeToSocket(START_UPLOAD);
+				char fileName[BUFFER_SIZE];
+				char data[BUFFER_SIZE];
+				GetWindowText(FileNameBox, fileName, BUFFER_SIZE);
+				// Sending fileName to server
+				tcp->writeToSocket(fileName);
+
+				ifstream readFile;
+				readFile.open(fileName);
+
+				// File Transfer
+				while(true)
+				{
+					readFile.read(data, BUFFER_SIZE);
+					tcp->writeToSocket(data);
+
+					if(readFile.eof())
+					{
+						readFile.close();
+						break;
+					}
+				}
+				break;
+			}
 		}
 		return 0;
 	case WM_DESTROY:
