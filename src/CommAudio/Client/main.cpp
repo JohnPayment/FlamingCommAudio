@@ -241,6 +241,10 @@ void writeFileFromNetwork(char* fileName, TCPClient* client)
 	while(totalRecv < fileSize)
 	{
 		n = client->readFromSocket(fileChunk);
+		if(n + totalRecv  > fileSize)
+		{
+			n = fileSize - totalRecv;
+		}
 		file.write(fileChunk, n);
 		totalRecv += n;
 	}
