@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 --
 -- DESIGNER: John Payment
 --
--- PROGRAMMER: John Payment
+-- PROGRAMMER: John Payment, Jesse Wright
 --
 -- INTERFACE: void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Overlapped, DWORD InFlags)
 --                 DWORD Error - Contains an error code if the WSA function that called it failed
