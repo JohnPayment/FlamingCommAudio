@@ -33,6 +33,7 @@ int TCPMode;
 ifstream readFile, songLibrary;
 char fileName[DATA_BUFSIZE];
 bool didWrite;
+int currentPos;
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: main
@@ -56,7 +57,7 @@ int main(int argc, char *argv[])
 {
 	TCPMode = 0;
 	didWrite = false;
-
+	currentPos = 0;
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
@@ -92,6 +93,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 	// Reference the WSAOVERLAPPED structure as a SOCKET_INFORMATION structure
 	LPSOCKET_INFORMATION SI = (LPSOCKET_INFORMATION) Overlapped;
 	char fileSizee[30];
+	memset(fileSizee, 0, 30);
 	int fileSize = 0, begin = 0;
 
 	if(Error != 0)
@@ -145,7 +147,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 
 		if(SI->Buffer[0] == START_TRANSFER)
 		{
-			readFile.open("test.mp3");
+			readFile.open("test.mp3", std::ifstream::binary);
 			begin = readFile.tellg();
 			readFile.seekg(0, ios_base::end);
 			fileSize = readFile.tellg();
@@ -166,9 +168,11 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		
 		break;
 	case 4:
+		readFile.seekg(0, currentPos);
 		readFile.read(SI->Buffer, DATA_BUFSIZE);
-
-		if(readFile.eof())
+		currentPos = readFile.tellg();
+		
+		if(!readFile.good())
 		{
 			TCPMode = 0;
 		}
