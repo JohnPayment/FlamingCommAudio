@@ -113,8 +113,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		DrawText(hdc, TEXT("File Name"), -1, &lables, DT_SINGLELINE | DT_RIGHT | DT_VCENTER);
 
 		lables.top = 100;
-		lables.bottom = 290;
-		DrawText(hdc, outputLine, -1, &lables,  DT_CENTER | DT_VCENTER);
+		lables.bottom = 300;
+		lables.right = 300;
+		DrawText(hdc, outputLine, -1, &lables,  DT_LEFT | DT_VCENTER);
 		  
 		EndPaint(hwnd, &ps);
 		return 0;
