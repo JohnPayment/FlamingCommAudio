@@ -96,6 +96,7 @@ void RunMulticast()
 	bool backToStart = false;
 
 	memset(buffer, 0, BUFLEN);
+	printf("Multicast Session Started.\n");
 	nRet = WSAStartup(0x0202, &stWSAData);
 	if (nRet) 
 	{
@@ -111,7 +112,6 @@ void RunMulticast()
 	DisableLoopback(&socketfd);
 	stDstAddr = SetDestinationAddr(achMCAddr, nPort);
 
-	_getch();
 	while(true) // main loop for choosing song from library
 	{
 		songFile.open("songs.txt");
@@ -119,8 +119,8 @@ void RunMulticast()
 		for(int i = 0; i < currentSong; i++) // will loop until the current number
 		{
 			getline(songFile, songName);
-			cout << songName << endl;
 		}
+		printf("Current Song: %s\n", songName.c_str());
 		if(songFile.eof())
 		{
 			backToStart = true;

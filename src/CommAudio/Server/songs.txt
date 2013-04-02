@@ -1,3 +1,2 @@
-DarkLord.wav
 test.mp3
 test1.mp3
