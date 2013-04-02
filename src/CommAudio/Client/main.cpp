@@ -16,10 +16,10 @@ using namespace std;
 void writeFileFromNetwork(char* fileName, TCPClient* client);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-
+char response[BUFFER_SIZE];
 char outputLine[BUFFER_SIZE];
 TCPClient* tcp;
-
+int fileSize;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     PSTR szCmdLine, int iCmdShow)
 {
@@ -174,15 +174,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_POST_FILENAME: // DOWNLOAD
 			if(tcp != NULL)
 			{
-				tcp->writeToSocket(START_TRANSFER);
+				char temp[BUFFER_SIZE] =  START_TRANSFER;
 				char fileName[BUFFER_SIZE];
-				char response[BUFFER_SIZE];
+				
 				GetWindowText(FileNameBox, fileName, BUFFER_SIZE);
+				strcat(temp, fileName);
 				// Sending fileName to server
-				tcp->writeToSocket(fileName);
+				tcp->writeToSocket(temp);
 
 				// Storing response
 				tcp->readFromSocket(response);
+				//tcp->readFromSocket(response);
+				fileSize = atoi(response);
+				writeFileFromNetwork(fileName, tcp);
 				if(!strcmp(response, START_TRANSFER))
 				{
 					// Start writing file
@@ -230,15 +234,15 @@ void writeFileFromNetwork(char* fileName, TCPClient* client)
 {
 	ofstream file(fileName);
 	char fileChunk[BUFFER_SIZE];
+	memset(fileChunk, 0, BUFFER_SIZE);
+	int n = 0, totalRecv = 0;
 
-	while(true)
+	while(totalRecv < fileSize)
 	{
-		client->readFromSocket(fileChunk);
-		file << fileChunk;
-		if(file.eof())
-		{
-			file.close();
-			break;
-		}
+		n = client->readFromSocket(fileChunk);
+		file.write(fileChunk, n);
+		totalRecv += n;
 	}
+
+	file.close();
 }

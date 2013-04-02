@@ -32,6 +32,8 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 int TCPMode;
 ifstream readFile, songLibrary;
 char fileName[DATA_BUFSIZE];
+bool didWrite;
+int currentPos;
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: main
@@ -53,8 +55,9 @@ char fileName[DATA_BUFSIZE];
 ----------------------------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[]) 
 {
-	TCPMode = 1;
-
+	TCPMode = 0;
+	didWrite = false;
+	currentPos = 0;
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
@@ -89,6 +92,9 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 {
 	// Reference the WSAOVERLAPPED structure as a SOCKET_INFORMATION structure
 	LPSOCKET_INFORMATION SI = (LPSOCKET_INFORMATION) Overlapped;
+	char fileSizee[30];
+	memset(fileSizee, 0, 30);
+	int fileSize = 0, begin = 0;
 
 	if(Error != 0)
 	{
@@ -120,96 +126,68 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		SI->BytesSEND += BytesTransferred;
 	}
 
-//-------------------------------------------------
-	// Setting the initial connection mode
-	if(!strcmp(SI->Buffer, FILE_TRANSFER))
-	{
-		// We want to send A list of names
-		TCPMode = 1;
-	} else if(!strcmp(SI->Buffer, START_TRANSFER))
-	{
-		// Client downloading file
-		TCPMode = 3;
-		//TCPServer::get()->readFromSocket(SI);
-	} else if(!strcmp(SI->Buffer, START_UPLOAD))
-	{
-		// Client Uploading File
-		TCPMode = 5;
-	}else if(!strcmp(SI->Buffer, MICROPHONE))
-	{
-		// Put Code for starting Microphone mode here
-	}
-
 	switch(TCPMode)
 	{
-		case 2: // Waiting for file name
-			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
-			break;
-		case 5:
-			strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
-			TCPMode = 6;
-			break;
-		case 6:
+	case 0: // Default
+		if(!strcmp(SI->Buffer, FILE_TRANSFER))
 		{
-				ofstream writeFile(fileName);
-			while(true)
-			{
-				TCPServer::get()->readFromSocket(SI);
-
-				strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
-				writeFile << fileName;
-				if(writeFile.eof())
-				{
-					writeFile.close();
-					TCPMode = 0;
-				}
-			}
-		}
-		break;
-	}
-//---------------------------------------------------
-
-	if(SI->BytesRECV > SI->BytesSEND)
-	{
-		// Writing
-		switch(TCPMode)
-		{
-		// Send File Names
-		case 1:
+			// We want to send A list of names
 			songLibrary.open("songs.txt");
 			songLibrary.read(SI->Buffer, DATA_BUFSIZE);
 			songLibrary.close();
+
 			TCPMode = 2;
-			break;
-		// Attempt To Open File after getting File Name
-		case 3:
-			// File Open. This has its own number because we only want to do it once
-			// test.txt will need to be replaced with a file name received from the client later on
-			readFile.open(fileName);
-			//send dater
-			if(readFile.fail())
-			{
-				TCPMode = 2;
-				break;
-			} else
-			{
-				TCPMode = 4;
-			}
-		// Write data from file
-		case 4:
-			// File Transfer
-			readFile.read(SI->Buffer, DATA_BUFSIZE);
-			if(readFile.eof())
-			{
-				readFile.close();
-				TCPMode = 1;
-			}
-			break;
+			didWrite = true;
+
+			TCPServer::get()->writeToSocket(SI);
 		}
+		break;
+	case 2: // get file name and Upload/Download
+		strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+
+		if(SI->Buffer[0] == START_TRANSFER)
+		{
+			readFile.open("test.mp3", std::ifstream::binary);
+			begin = readFile.tellg();
+			readFile.seekg(0, ios_base::end);
+			fileSize = readFile.tellg();
+			fileSize -= begin;
+			readFile.seekg(0);
+			sprintf(fileSizee, "%d", fileSize);
+			strcpy(SI->Buffer, fileSizee);
+
+			TCPMode = 4;
+			didWrite = true;
+
+			TCPServer::get()->writeToSocket(SI);
+		} else if(SI->Buffer[0] == START_UPLOAD)
+		{
+			// Client Uploading File
+			TCPMode = 5;
+		}
+		
+		break;
+	case 4:
+		readFile.seekg(0, currentPos);
+		readFile.read(SI->Buffer, DATA_BUFSIZE);
+		currentPos = readFile.tellg();
+		
+		if(!readFile.good())
+		{
+			TCPMode = 0;
+		}
+		didWrite = true;
+
 		TCPServer::get()->writeToSocket(SI);
-	} else
-	{
-		// Reading
-		TCPServer::get()->readFromSocket(SI);	
+		break;
 	}
+
+	if(!didWrite)
+	{
+		// Need to read to continue the routine
+		TCPServer::get()->readFromSocket(SI);
+	}
+
+	didWrite = false;
+
 }
