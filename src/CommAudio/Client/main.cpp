@@ -236,6 +236,7 @@ void writeFileFromNetwork(char* fileName, TCPClient* client)
 {
 	ofstream file(fileName);
 	char fileChunk[BUFFER_SIZE];
+	memset(fileChunk, 0, BUFFER_SIZE);
 	int n = 0, totalRecv = 0;
 
 	while(totalRecv < fileSize)
