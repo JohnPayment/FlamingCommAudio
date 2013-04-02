@@ -54,16 +54,17 @@ bool didWrite;
 ----------------------------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[]) 
 {
-	/*TCPMode = 0;
+	TCPMode = 0;
 	didWrite = false;
 
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
-	RunMulticast();*/
 
 	MicServerSessionThread();
 	WSACleanup();
+
+	RunMulticast();
 
 	return (0);
 }
@@ -144,11 +145,11 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		}
 		break;
 	case 2: // get file name and Upload/Download
-		strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+		strncpy(fileName, &SI->Buffer[1], DATA_BUFSIZE);
 
 		if(SI->Buffer[0] == START_TRANSFER)
 		{
-			readFile.open("test.mp3", std::ifstream::binary);
+			readFile.open(fileName, std::ifstream::binary);
 			begin = readFile.tellg();
 			readFile.seekg(0, ios_base::end);
 			fileSize = readFile.tellg();

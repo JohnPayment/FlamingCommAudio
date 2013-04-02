@@ -28,7 +28,7 @@
 #include <windows.h>
 #include <stdio.h>
 
-#define PORT 5150
+#define PORT 8999
 #define DATA_BUFSIZE 8192
 
 #define FILE_TRANSFER 'F'

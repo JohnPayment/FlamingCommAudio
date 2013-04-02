@@ -26,7 +26,7 @@
 #include <winsock2.h>
 #include <errno.h>
 
-#define SERVER_TCP_PORT 5150
+#define SERVER_TCP_PORT 8999
 #define BUFFER_SIZE     8192
 
 #define FILE_TRANSFER "F"
