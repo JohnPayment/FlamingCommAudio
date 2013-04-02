@@ -233,7 +233,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 void writeFileFromNetwork(char* fileName, TCPClient* client)
 {
-	ofstream file(fileName);
+	ofstream file(fileName, std::ofstream::binary);
 	char fileChunk[BUFFER_SIZE];
 	memset(fileChunk, 0, BUFFER_SIZE);
 	int n = 0, totalRecv = 0;
