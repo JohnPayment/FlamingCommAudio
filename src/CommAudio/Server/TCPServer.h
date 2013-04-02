@@ -31,10 +31,10 @@
 #define PORT 5150
 #define DATA_BUFSIZE 8192
 
-#define FILE_TRANSFER "F"
+#define FILE_TRANSFER 'F'
 #define START_TRANSFER 'S'
 #define START_UPLOAD 'U'
-#define MICROPHONE "M"
+#define MICROPHONE 'M'
 
 typedef struct _SOCKET_INFORMATION 
 {

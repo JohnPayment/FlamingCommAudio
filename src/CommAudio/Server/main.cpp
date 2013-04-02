@@ -129,7 +129,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 	switch(TCPMode)
 	{
 	case 0: // Default
-		if(!strcmp(SI->Buffer, FILE_TRANSFER))
+		if(SI->Buffer[0] == FILE_TRANSFER)
 		{
 			// We want to send A list of names
 			songLibrary.open("songs.txt");
@@ -168,18 +168,25 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		
 		break;
 	case 4:
-		readFile.seekg(0, currentPos);
-		readFile.read(SI->Buffer, DATA_BUFSIZE);
-		currentPos = readFile.tellg();
-		
-		if(!readFile.good())
 		{
-			TCPMode = 0;
-		}
-		didWrite = true;
+			char buffer[DATA_BUFSIZE];
+			readFile.seekg(0, currentPos);
+			readFile.read(buffer, DATA_BUFSIZE);
+			currentPos = readFile.tellg();
+			for(int i = 0; i < DATA_BUFSIZE; ++i)
+			{
+				SI->Buffer[i] = buffer[i];
+			}
+		
+			if(!readFile.good())
+			{
+				TCPMode = 0;
+			}
+			didWrite = true;
 
-		TCPServer::get()->writeToSocket(SI);
-		break;
+			TCPServer::get()->writeToSocket(SI);
+			break;
+		}
 	}
 
 	if(!didWrite)
