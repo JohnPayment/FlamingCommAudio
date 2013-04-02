@@ -157,20 +157,22 @@ void WINAPI ClientMulticastThread()
 		}
 	}		
 }
-void StartMicSession()
+void StartMicSession(char * IPAddress)
 {
 	HANDLE MicSessionHandle;
 	DWORD threadID;
 
-	if((MicSessionHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) MicSessionThread, NULL, 0, &threadID)) == 0)
+	if((MicSessionHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) MicSessionThread, (LPVOID) IPAddress, 0, &threadID)) == 0)
 	{
 		MessageBox(NULL, "Microphone session thread creation failed", NULL, MB_OK);
 		return;
 	}
 }
 
-DWORD WINAPI MicSessionThread()
+DWORD WINAPI MicSessionThread(LPVOID lpParameter)
 {
+
+	char * IPAddress = (char *) lpParameter;
 	WSADATA wsaData;
 	WORD wVersionRequested = MAKEWORD(2,2);
 	WSAStartup(wVersionRequested, &wsaData);
@@ -184,13 +186,15 @@ DWORD WINAPI MicSessionThread()
 	{
 		printf("SetDestAddr error: %d\n", WSAGetLastError());
 		MessageBox(NULL, output, "Error", NULL);
+		delete[] IPAddress;
 	}
-	server = SetDestinationAddr("localhost", 7000);
+	server = SetDestinationAddr(IPAddress, 5150);
 	//Bind the socket
-	if((result = BindSocket(&sock, INADDR_ANY, 7000)) == SOCKET_ERROR)
+	if((result = BindSocket(&sock, INADDR_ANY, 5150)) == SOCKET_ERROR)
 	{
 		sprintf(output, "BindSocket error: %d\n", WSAGetLastError());
 		MessageBox(NULL, output, "Error", NULL);
+		delete[] IPAddress;
 	}
 
 	speakers->SetSettings(sidSamplerate, 44100);// 44100 samples
@@ -204,6 +208,7 @@ DWORD WINAPI MicSessionThread()
 		sprintf(output, "Error: %s\n", speakers->GetError());
 		MessageBox(NULL, output, NULL, MB_OK);
 		speakers->Release();
+		delete[] IPAddress;
 		return 0;
 	}
 
@@ -213,6 +218,7 @@ DWORD WINAPI MicSessionThread()
 		sprintf(output, "Error: %s\n", mic->GetError());
 		MessageBox(NULL, output, NULL, MB_OK);
 		mic->Release();
+		delete[] IPAddress;
 		return 0;
 	}
 	
@@ -232,8 +238,6 @@ DWORD WINAPI MicSessionThread()
             if(a == 'q' || a == 'Q')
                 break; // end program if Q key is pressed
         }
-
-
 		// Simply send the entire microphone data buffer to server.
 		if((recv_bytes = recvfrom(sock, buf, sizeof(buf), 0, (sockaddr*)&server, &size)) < 0)
 		{
@@ -245,13 +249,16 @@ DWORD WINAPI MicSessionThread()
 				sprintf(output, "Get Last error %d\n", err);
 				MessageBox(NULL, output, NULL, MB_OK);
 			}
+			
 			break;
 		}
 		speakers->PushDataToStream(buf, recv_bytes);
 		speakers->Play();
 	}
+	delete[] IPAddress;
 	speakers->Release();
 	mic->Release();
+	WSACleanup();
 	return 0;
 
 }

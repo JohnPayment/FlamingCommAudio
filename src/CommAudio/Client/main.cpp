@@ -133,7 +133,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 					delete tcp;
 				}
 
-				char ip[IPSIZE];
+				char * ip = new char[IPSIZE];
 				GetWindowText(IPBox, ip, IPSIZE);
 				tcp = new TCPClient(SetDestinationAddr(ip, 5150));
 				tcp->StartClient();
@@ -144,7 +144,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 				//start p2p udp session
 				//runs the session unitl
-				StartMicSession();
+				StartMicSession(ip);
 
 			}
 			break;

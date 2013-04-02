@@ -55,14 +55,16 @@ int currentPos;
 ----------------------------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[]) 
 {
-	TCPMode = 0;
+	/*TCPMode = 0;
 	didWrite = false;
 	currentPos = 0;
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
-	RunMulticast();
-	WSACleanup();
+	RunMulticast();*/
+
+	MicServerSessionThread();
+	//WSACleanup();
 
 	return (0);
 }

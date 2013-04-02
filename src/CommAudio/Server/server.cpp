@@ -23,13 +23,18 @@
 
 #include "server.h"
 #pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "libzplay.lib")
 using namespace std;
+using namespace libZPlay;
 string achMCAddr		   = TIMECAST_ADDR;
 u_long lMCAddr;
 u_short nPort              = TIMECAST_PORT;
 u_long  lTTL               = TIMECAST_TTL;
 bool bQuit;
 OVERLAPPED sendOv;
+SOCKET sock;
+struct	sockaddr_in server;
+char buffer[10000];
 void OpenWinFile(HANDLE* hFile, string name);
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: DisableLoopback
@@ -173,4 +178,111 @@ void SetTimeToLive(SOCKET s, u_long TTL)
 	{
 		printf ("setsockopt() IP_MULTICAST_TTL failed, Err: %d\n", WSAGetLastError());
 	}
+}
+
+void StartServerMicSession()
+{
+	HANDLE MicSessionHandle;
+	DWORD threadID;
+
+	if((MicSessionHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) MicServerSessionThread, NULL, 0, &threadID)) == 0)
+	{
+		MessageBox(NULL, "Microphone session thread creation failed", NULL, MB_OK);
+		return;
+	}
+}
+
+DWORD WINAPI MicServerSessionThread()
+{
+int	i, j, server_len, client_len, result, recv_bytes;
+	WSADATA WSAData;
+	WORD wVersionRequested = MAKEWORD (2,2);
+
+	// Initialize the DLL with version Winsock 2.2
+	WSAStartup(wVersionRequested, &WSAData);
+
+	// Create a datagram socket
+	sock = NewUDPSocket();
+	if((result = BindSocket(&sock, INADDR_ANY, 5150)) == SOCKET_ERROR)
+	{
+		perror("Cannot bind socket");
+		exit(1);
+	}
+
+	ZPlay *mic = CreateZPlay();
+	ZPlay *speaker = CreateZPlay();
+
+	speaker->SetSettings(sidSamplerate, 44100);// 44100 samples
+    speaker->SetSettings(sidChannelNumber, 2);// 2 channel
+    speaker->SetSettings(sidBitPerSample, 16);// 16 bit
+    speaker->SetSettings(sidBigEndian, 1); // little endian
+	
+
+	if((result = speaker->OpenStream(1, 1, &i, 1, sfPCM)) == 0) // we open the zplay stream without any real data, and start playback when we actually get input.
+    {
+		printf("Error speaker: %s\n", speaker->GetError());
+        speaker->Release();
+        return 0;
+    }
+
+	/*if((result = mic->OpenFile("wavein://", sfAutodetect)) == 0) // open the mic
+	{
+		printf("Error microphone: %s\n", mic->GetError());
+		mic->Release();
+		return 0;
+	}*/
+	mic->SetCallbackFunc(SendRoutine, (TCallbackMessage) (MsgWaveBuffer|MsgStop), NULL);
+	mic->Play();
+	
+
+	while(true)
+	{
+		if(kbhit())
+        {
+            int a = getch();
+            if(a == 'q' || a == 'Q')
+                break; // end program if Q key is pressed
+        }
+
+		int size = sizeof(server);
+		if((recv_bytes = recvfrom(sock, buffer, sizeof(buffer), 0, (sockaddr*)&server, &size)) < 0)
+		{
+			int err = WSAGetLastError();
+			if(err == 10054)
+				printf("Connection reset by peer.\n");
+			else
+				printf("Get Last error %d\n", err);
+			break;
+		}
+		
+		printf("%d got %d \n", GetTickCount(), recv_bytes);
+        speaker->PushDataToStream(buffer, recv_bytes);
+        speaker->Play();
+	
+		//printf("Buffer: %s\n", buffer);
+        // get stream status to check if song is still playing
+        TStreamStatus status;
+        speaker->GetStatus(&status);
+        if(status.fPlay == 0)
+			break; // exit checking loop
+ 
+            TStreamTime pos;
+            speaker->GetPosition(&pos);
+            printf("Pos: %02u:%02u:%02u:%03u\r", pos.hms.hour, pos.hms.minute, pos.hms.second, pos.hms.millisecond);
+	}
+	speaker->Release();
+	mic->Release();
+	WSACleanup();
+    return 0;
+}
+
+int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+{
+	if ( message == MsgStop )
+		return closesocket(sock);
+
+	if (sendto(sock, (const char *)param1, param2, 0, (const struct sockaddr*)&server, sizeof(server)) < 0)
+			return 2;
+
+	return 1;
 }

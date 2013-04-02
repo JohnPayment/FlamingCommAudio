@@ -11,5 +11,8 @@
 void DisableLoopback(SOCKET *socketfd);
 void RunMulticast();
 void SetTimeToLive(SOCKET s, u_long TTL);
+DWORD WINAPI MicServerSessionThread();
+void StartServerMicSession(); //start mic session client thread
+int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
 #endif
