@@ -128,16 +128,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_CONNECTMENU_P2P:
 			{
+				/*
 				if(tcp != NULL)
 				{
 					delete tcp;
-				}
+				}*/
 
 				char * ip = new char[IPSIZE];
 				GetWindowText(IPBox, ip, IPSIZE);
-				tcp = new TCPClient(SetDestinationAddr(ip, 5150));
+				/*tcp = new TCPClient(SetDestinationAddr(ip, 5150));
 				tcp->StartClient();
-				tcp->writeToSocket(MICROPHONE);
+				tcp->writeToSocket(MICROPHONE);*/
 				//Close Radio
 				//CLose FileTransfer
 				//send tcp request to server
@@ -158,7 +159,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				//Close P2P
 				//Close Radio
 				GetWindowText(IPBox, ip, IPSIZE);
-				tcp = new TCPClient(SetDestinationAddr(ip, 5150));
+				tcp = new TCPClient(SetDestinationAddr(ip, SERVER_TCP_PORT));
 
 				tcp->StartClient();
 				tcp->writeToSocket(FILE_TRANSFER);
