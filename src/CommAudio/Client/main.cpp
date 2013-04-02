@@ -295,4 +295,5 @@ void writeFileFromNetwork(char* fileName, TCPClient* client)
 	}
 
 	file.close();
+	client->closeSocket();
 }
