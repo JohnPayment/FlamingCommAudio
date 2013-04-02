@@ -31,7 +31,6 @@ u_long lMCAddr;
 u_short nPort              = TIMECAST_PORT;
 u_long  lTTL               = TIMECAST_TTL;
 bool bQuit;
-OVERLAPPED sendOv;
 SOCKET sock;
 struct	sockaddr_in server;
 char buffer[10000];
@@ -89,6 +88,7 @@ void RunMulticast()
 	WSADATA stWSAData;
 	ifstream songFile;
 	char buffer[BUFLEN];
+	WSAOVERLAPPED sendOv;
 	ZeroMemory(&sendOv, sizeof(OVERLAPPED));
 	int currentSong = 1;
 	string songName;
@@ -194,11 +194,9 @@ void StartServerMicSession()
 
 DWORD WINAPI MicServerSessionThread()
 {
-int	i, j, server_len, client_len, result, recv_bytes;
+	int	i, j, server_len, client_len, result, recv_bytes;
 	WSADATA WSAData;
 	WORD wVersionRequested = MAKEWORD (2,2);
-
-	// Initialize the DLL with version Winsock 2.2
 	WSAStartup(wVersionRequested, &WSAData);
 
 	// Create a datagram socket
@@ -225,16 +223,13 @@ int	i, j, server_len, client_len, result, recv_bytes;
         return 0;
     }
 
-	/*if((result = mic->OpenFile("wavein://", sfAutodetect)) == 0) // open the mic
+	if((result = mic->OpenFile("wavein://", sfAutodetect)) == 0) // open the mic
 	{
 		printf("Error microphone: %s\n", mic->GetError());
 		mic->Release();
 		return 0;
-	}*/
-	mic->SetCallbackFunc(SendRoutine, (TCallbackMessage) (MsgWaveBuffer|MsgStop), NULL);
-	mic->Play();
+	}
 	
-
 	while(true)
 	{
 		if(kbhit())
@@ -254,7 +249,8 @@ int	i, j, server_len, client_len, result, recv_bytes;
 				printf("Get Last error %d\n", err);
 			break;
 		}
-		
+		mic->SetCallbackFunc(SendRoutine, (TCallbackMessage) (MsgWaveBuffer|MsgStop), NULL);
+		mic->Play();
 		printf("%d got %d \n", GetTickCount(), recv_bytes);
         speaker->PushDataToStream(buffer, recv_bytes);
         speaker->Play();
@@ -281,6 +277,7 @@ int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMe
 	if ( message == MsgStop )
 		return closesocket(sock);
 
+	printf("%d sent %d \n", GetTickCount(), param2);
 	if (sendto(sock, (const char *)param1, param2, 0, (const struct sockaddr*)&server, sizeof(server)) < 0)
 			return 2;
 

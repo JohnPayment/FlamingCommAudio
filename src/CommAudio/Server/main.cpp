@@ -54,15 +54,16 @@ bool didWrite;
 ----------------------------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[]) 
 {
-	/*TCPMode = 0;
+	MicServerSessionThread();
+	
+	TCPMode = 0;
 	didWrite = false;
 
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
-	RunMulticast();*/
 
-	MicServerSessionThread();
+	RunMulticast();
 	WSACleanup();
 
 	return (0);
