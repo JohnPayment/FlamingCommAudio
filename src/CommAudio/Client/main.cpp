@@ -144,9 +144,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 				//start p2p udp session
 				//runs the session unitl
-				UDPSocket = NewUDPSocket();
-				BindSocket(&UDPSocket, "localhost", 7000);
-
+				StartMicSession();
 
 			}
 			break;

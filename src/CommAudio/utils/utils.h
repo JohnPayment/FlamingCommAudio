@@ -40,12 +40,8 @@ void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendO
 void UDPRead(OVERLAPPED *recvOv);
 int SetReuseAddr(SOCKET* socketfd);
 
-void StartMicSession(SOCKET socketfd);
 int SendMicSessionRequest(SOCKET socketfd);
-int SendAudioData(SOCKET s);
-int __stdcall PlaybackRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
-DWORD WINAPI ListenForPackets(LPVOID lpParameter);
-DWORD WINAPI MonitorMicInput(LPVOID lpParameter);
+
 
 #endif

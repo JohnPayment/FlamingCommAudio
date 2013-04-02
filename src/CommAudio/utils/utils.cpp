@@ -286,22 +286,7 @@ int SetReuseAddr(SOCKET* socketfd)
 	return result;
 }
 
-void StartMicSession(SOCKET socketfd)
-{
-	HANDLE ListenPacketsHandle, MicInputThread;
-	DWORD threadID1, threadID2;
 
-	if((ListenPacketsHandle = CreateThread(NULL, 0, ListenForPackets, (LPVOID) socketfd, 0, &threadID1)) == 0)
-	{
-		MessageBox(NULL, "Listen for Packets thread creation failed", NULL, MB_OK);
-		return;
-	}
-	if((MicInputThread = CreateThread(NULL, 0, MonitorMicInput, (LPVOID) socketfd, 0, &threadID2)) == 0)
-	{
-		MessageBox(NULL, "Monitor for Microphone Input thread creation failed", NULL, MB_OK);
-		return;
-	}
-}
 int SendMicSessionRequest(SOCKET *socketfd, const struct sockaddr *dest, OVERLAPPED *sendOv)
 {
 	char recvBuf[BUFLEN];
@@ -330,35 +315,4 @@ int SendMicSessionRequest(SOCKET *socketfd, const struct sockaddr *dest, OVERLAP
 		return 0;
 
 	return -1;
-}
-
-int BufferAndPlaybackSound(SOCKET socketfd)
-{
-	return 0;
-}
-
-int __stdcall PlaybackRoutine(void* instance, void *user_data, TCallbackMessage message, unsigned int param1, unsigned int param2)
-{
-
-	return 0;
-}
-DWORD WINAPI ListenForPackets(LPVOID lpParameter)
-{
-	SOCKET listenSocket = (SOCKET) lpParameter;
-
-	while(true)
-	{
-
-	}
-	return 0;
-}
-DWORD WINAPI MonitorMicInput(LPVOID lpParameter)
-{
-	SOCKET Socket = (SOCKET) lpParameter;
-
-	while(true)
-	{
-
-	}
-	return 0;
 }

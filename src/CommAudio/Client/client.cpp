@@ -30,6 +30,9 @@ using namespace libZPlay;
 using namespace std;
 ZPlay* player;
 string firstframe;
+SOCKET sock;
+SOCKADDR_IN server, client;
+char buf[10000];
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: ClientMulticastThread
 --
@@ -152,6 +155,114 @@ void WINAPI ClientMulticastThread()
 			}
 
 		}
+	}		
+}
+void StartMicSession()
+{
+	HANDLE MicSessionHandle;
+	DWORD threadID;
+
+	if((MicSessionHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) MicSessionThread, NULL, 0, &threadID)) == 0)
+	{
+		MessageBox(NULL, "Microphone session thread creation failed", NULL, MB_OK);
+		return;
 	}
-			
+}
+
+DWORD WINAPI MicSessionThread()
+{
+	WSADATA wsaData;
+	WORD wVersionRequested = MAKEWORD(2,2);
+	WSAStartup(wVersionRequested, &wsaData);
+	int recv_bytes, result, i;
+	char output[100];
+	ZPlay * speakers = CreateZPlay();
+	ZPlay *mic = CreateZPlay();
+
+	//set destination address
+	if((sock = NewUDPSocket()) == INVALID_SOCKET)
+	{
+		printf("SetDestAddr error: %d\n", WSAGetLastError());
+		MessageBox(NULL, output, "Error", NULL);
+	}
+	server = SetDestinationAddr("localhost", 7000);
+	//Bind the socket
+	if((result = BindSocket(&sock, INADDR_ANY, 7000)) == SOCKET_ERROR)
+	{
+		sprintf(output, "BindSocket error: %d\n", WSAGetLastError());
+		MessageBox(NULL, output, "Error", NULL);
+	}
+
+	speakers->SetSettings(sidSamplerate, 44100);// 44100 samples
+	speakers->SetSettings(sidChannelNumber, 2);// 2 channel
+	speakers->SetSettings(sidBitPerSample, 16);// 16 bit
+	speakers->SetSettings(sidBigEndian, 1); // little endian
+
+	// Remote microphone is a UDP "stream" of PCM data,
+	result = speakers->OpenStream(1, 1, &i, 1, sfPCM); // we open the zplay stream without any real data, and start playback when we actually get input.
+	if(result == 0) {
+		sprintf(output, "Error: %s\n", speakers->GetError());
+		MessageBox(NULL, output, NULL, MB_OK);
+		speakers->Release();
+		return 0;
+	}
+
+	// Open microphone
+	result = mic->OpenFile("wavein://", sfAutodetect);
+	if(result == 0) {
+		sprintf(output, "Error: %s\n", mic->GetError());
+		MessageBox(NULL, output, NULL, MB_OK);
+		mic->Release();
+		return 0;
+	}
+	
+	// Microphone data is provided via callback message MsgWaveBuffer.
+	mic->SetCallbackFunc(SendRoutine, (TCallbackMessage)(MsgWaveBuffer|MsgStop), NULL);
+
+	// start getting microphone input.
+	mic->Play();
+
+	while(1) {
+		
+		int size = sizeof(server);
+		
+		if(kbhit())
+        {
+            int a = getch();
+            if(a == 'q' || a == 'Q')
+                break; // end program if Q key is pressed
+        }
+
+
+		// Simply send the entire microphone data buffer to server.
+		if((recv_bytes = recvfrom(sock, buf, sizeof(buf), 0, (sockaddr*)&server, &size)) < 0)
+		{
+			int err = WSAGetLastError();
+			if(err == 10054)
+				MessageBox(NULL, "Connection reset by peer.", NULL, MB_OK);
+			else
+			{
+				sprintf(output, "Get Last error %d\n", err);
+				MessageBox(NULL, output, NULL, MB_OK);
+			}
+			break;
+		}
+		speakers->PushDataToStream(buf, recv_bytes);
+		speakers->Play();
+	}
+	speakers->Release();
+	mic->Release();
+	return 0;
+
+}
+
+int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+{
+	if ( message == MsgStop )
+		return closesocket(sock);
+
+	if (sendto(sock, (const char *)param1, param2, 0, (const struct sockaddr*)&server, sizeof(server)) < 0)
+			return 2;
+
+	return 1;
 }
