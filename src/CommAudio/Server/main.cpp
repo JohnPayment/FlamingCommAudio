@@ -33,7 +33,6 @@ int TCPMode;
 ifstream readFile, songLibrary;
 char fileName[DATA_BUFSIZE];
 bool didWrite;
-int currentPos;
 
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: main
@@ -57,7 +56,7 @@ int main(int argc, char *argv[])
 {
 	TCPMode = 0;
 	didWrite = false;
-	currentPos = 0;
+
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
@@ -168,17 +167,17 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		
 		break;
 	case 4:
-		readFile.seekg(0, currentPos);
-		readFile.read(SI->Buffer, DATA_BUFSIZE);
-		currentPos = readFile.tellg();
-		
-		if(!readFile.good())
 		{
-			TCPMode = 0;
-		}
-		didWrite = true;
+			readFile.read(SI->Buffer, DATA_BUFSIZE);
+		
+			if(!readFile.good())
+			{
+				TCPMode = 0;
+			}
+			didWrite = true;
 
-		TCPServer::get()->writeToSocket(SI);
+			TCPServer::get()->writeToSocket(SI);
+		}
 		break;
 	}
 

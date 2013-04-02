@@ -208,8 +208,8 @@ TCPServer::writeToSocket(LPSOCKET_INFORMATION &SI)
 
 	ZeroMemory(&(SI->Overlapped), sizeof(WSAOVERLAPPED));
 
-	SI->DataBuf.buf = SI->Buffer + SI->BytesSEND;
-	SI->DataBuf.len = SI->BytesRECV - SI->BytesSEND;
+	SI->DataBuf.buf = SI->Buffer;
+	SI->DataBuf.len = DATA_BUFSIZE;
 
 	if(WSASend(SI->Socket, &(SI->DataBuf), 1, &sendBytes, 0, &(SI->Overlapped), WorkerRoutine) == SOCKET_ERROR)
 	{
