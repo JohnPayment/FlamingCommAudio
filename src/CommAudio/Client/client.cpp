@@ -106,7 +106,7 @@ void WINAPI ClientMulticastThread()
 		MessageBox(NULL, output, "Error", NULL);
 	}
 	//Join the Multicast Group
-	if((result = JoinMulticast(&recvSocket, "234.5.6.7")) == SOCKET_ERROR)
+	if((result = JoinMulticast(&recvSocket, "234.5.6.8")) == SOCKET_ERROR)
 	{
 		sprintf(output, "JoinMulticast error: %d\n", WSAGetLastError());
 		MessageBox(NULL, output, "Error", NULL);
@@ -117,10 +117,10 @@ void WINAPI ClientMulticastThread()
 		//Blocking call to the socket. This is needed to keep the client in sync.
 		if((BytesRead = recvfrom(recvSocket, recvBuf, RECV_MAX, 0, NULL, NULL)) > 0 )
 		{
-			firstframe.append(recvSocket, BytesRead);	
+			firstframe.append(recvBuf, BytesRead);	
 		}
 		//Wait for a valid MP3 packet
- 		while(!player->OpenStream(1, 1, firstframe.data(), firstframe.size(), sfMp3))
+		while(!player->OpenStream(1, 1, firstframe.data(), firstframe.size(), sfMp3))
 		{
 			
 			result = WSARecvFrom(recvSocket, &buf, 1, &BytesRead, &Flags, &SenderAddr, &SenderAddrLen, &recvOv, UDPRoutine);
