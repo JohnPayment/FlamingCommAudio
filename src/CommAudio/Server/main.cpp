@@ -42,7 +42,7 @@ bool didWrite;
 -- DATE: 2013/03/23
 --
 -- REVISIONS: (Date and Description)
---
+--Server
 -- DESIGNER: Jesse Wright
 --
 -- PROGRAMMER: Jesse Wright
@@ -56,7 +56,14 @@ bool didWrite;
 ----------------------------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[]) 
 {
+	HANDLE MulticastThread, MicSessionThread;
 
+	MulticastThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE) RunMulticast, NULL, NULL, NULL);
+	if(MulticastThread == NULL)
+	{
+		printf("Error with creating multicast thread. Ernum: %d", GetLastError());
+		return 0;
+	}
 	StartServerMicSession();
 
 	TCPMode = 0;
@@ -65,8 +72,6 @@ int main(int argc, char *argv[])
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
-
-	RunMulticast();
 	WSACleanup();
 
 	return (0);
