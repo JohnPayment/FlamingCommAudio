@@ -27,7 +27,7 @@
 #include <errno.h>
 
 #define SERVER_TCP_PORT 8999
-#define BUFFER_SIZE     8192
+#define BUFFER_SIZE     1024
 
 #define FILE_TRANSFER "F"
 #define START_TRANSFER "S"

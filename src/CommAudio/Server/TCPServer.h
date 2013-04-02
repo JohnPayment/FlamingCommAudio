@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 #define PORT 8999
-#define DATA_BUFSIZE 8192
+#define DATA_BUFSIZE 1024
 
 #define FILE_TRANSFER 'F'
 #define START_TRANSFER 'S'
