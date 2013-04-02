@@ -56,7 +56,8 @@ int main(int argc, char *argv[])
 {
 	TCPMode = 0;
 	didWrite = false;
-
+	RunMulticast();
+	
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
@@ -64,7 +65,7 @@ int main(int argc, char *argv[])
 	MicServerSessionThread();
 	WSACleanup();
 
-	RunMulticast();
+	
 
 	return (0);
 }
