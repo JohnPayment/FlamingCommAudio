@@ -19,8 +19,6 @@
 
 #define BUFLEN 1024
 #define RECV_MAX 2048
-//This struct will be assigned to the OVerlapped struct 
-//hEvent parameter for use in the Completion Routine.
 typedef struct recvData
 {
 	bool bQuit;

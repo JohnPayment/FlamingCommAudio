@@ -3,16 +3,18 @@
 --
 -- PROGRAM: CommAudio
 --
--- FUNCTIONS:
--- int main(int argc, char *argv[])
+-- FUNCTIONS: int main(int argc, char *argv[])
+--            void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Overlapped, DWORD InFlags)
 --
 -- DATE: 2013/03/23
 --
 -- REVISIONS: (Date and Description)
 --
 -- DESIGNER: Jesse Wright
+--           John Payment
 --
 -- PROGRAMMER: Jesse Wright
+--             John Payment
 --
 -- NOTES:
 -- The main function simply creates threads that will be delegated jobs to handle the clients requests as they come in.
@@ -30,7 +32,7 @@ using namespace std;
 void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Overlapped, DWORD InFlags);
 
 int TCPMode;
-ifstream readFile, songLibrary;
+ifstream readFile;
 char fileName[DATA_BUFSIZE];
 bool didWrite;
 
@@ -54,17 +56,21 @@ bool didWrite;
 ----------------------------------------------------------------------------------------------------------------------*/
 int main(int argc, char *argv[]) 
 {
+
 	MicServerSessionThread();
-	
+
 	TCPMode = 0;
 	didWrite = false;
-
+	RunMulticast();
+	
 	TCPServer::get()->WorkerRoutine = TCPRoutine;
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
 
 	RunMulticast();
 	WSACleanup();
+
+	
 
 	return (0);
 }
@@ -78,12 +84,12 @@ int main(int argc, char *argv[])
 --
 -- DESIGNER: John Payment
 --
--- PROGRAMMER: John Payment
+-- PROGRAMMER: John Payment, Jesse Wright
 --
 -- INTERFACE: void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Overlapped, DWORD InFlags)
---                 DWORD Error
---                 DWORD BytesTransferred
---                 LPWSAOVERLAPPED Overlapped
+--                 DWORD Error - Contains an error code if the WSA function that called it failed
+--                 DWORD BytesTransferred - The bytes transfered by the last WSA operation
+--                 LPWSAOVERLAPPED Overlapped - The overlap structure form the calling WSA function
 --                 DWORD InFlags
 --
 -- RETURNS: void
@@ -115,10 +121,6 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		return;
 	}
 
-	// Check to see if the BytesRECV field equals zero. If this is so, then
-	// this means a WSARecv call just completed so update the BytesRECV field
-	// with the BytesTransferred value from the completed WSARecv() call.
-
 	if(SI->BytesRECV == 0)
 	{
 		SI->BytesRECV = BytesTransferred;
@@ -128,12 +130,14 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		SI->BytesSEND += BytesTransferred;
 	}
 
+	// This is the bulk of the TCP handling.
 	switch(TCPMode)
 	{
 	case 0: // Default
 		if(SI->Buffer[0] == FILE_TRANSFER)
 		{
 			// We want to send A list of names
+			ifstream songLibrary;
 			songLibrary.open("songs.txt");
 			songLibrary.read(SI->Buffer, DATA_BUFSIZE);
 			songLibrary.close();
@@ -145,11 +149,12 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		}
 		break;
 	case 2: // get file name and Upload/Download
-		strncpy(fileName, SI->Buffer, DATA_BUFSIZE);
+		strncpy(fileName, &SI->Buffer[1], DATA_BUFSIZE);
 
 		if(SI->Buffer[0] == START_TRANSFER)
 		{
-			readFile.open("test.mp3", std::ifstream::binary);
+			readFile.close();
+			readFile.open(fileName, std::ifstream::binary);
 			begin = readFile.tellg();
 			readFile.seekg(0, ios_base::end);
 			fileSize = readFile.tellg();
@@ -169,7 +174,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		}
 		
 		break;
-	case 4:
+	case 4: // Reading data from the file and writing it to the socket
 		{
 			readFile.read(SI->Buffer, DATA_BUFSIZE);
 		
@@ -184,6 +189,7 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		break;
 	}
 
+	// We read from socket every time we DON'T write
 	if(!didWrite)
 	{
 		// Need to read to continue the routine

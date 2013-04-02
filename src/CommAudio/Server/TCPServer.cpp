@@ -2,6 +2,23 @@
 
 TCPServer* TCPServer::_Server = 0;
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: get
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: TCPServer* get()
+--
+-- RETURNS: A pointer to the TCPServer object
+--
+-- NOTES: Returns a pointer to the TCPServer object. Creates the object first if it is uninitialized.
+----------------------------------------------------------------------------------------------------------------------*/
 TCPServer* 
 TCPServer::get()
 {
@@ -220,12 +237,47 @@ TCPServer::writeToSocket(LPSOCKET_INFORMATION &SI)
 	}
 }
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: getSocket
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: SOCKET getSocket()
+--
+-- RETURNS: A copy of the socket
+--
+-- NOTES: Gives the caller a pointer to the stored socket. This is used mostly inside of the worker thread
+----------------------------------------------------------------------------------------------------------------------*/
 SOCKET 
 TCPServer::getSocket()
 {
 	return _AcceptSocket;
 }
 
+/*--------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: WorkerThread
+--
+-- DATE: 2013/03/25
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: DWORD WINAPI WorkerThread(LPVOID lpParameter)
+--                         LPVOID lpParameter - void pointer parameter for passing in arguments. Not really used.
+--
+-- RETURNS: Error/Success code from the function
+--
+-- NOTES: This is the worker thread for the TCP Server. It chiefly handles new arrivals, setting up the connection for when a client connects.
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI WorkerThread(LPVOID lpParameter)
 {
 	DWORD flags = 0;
