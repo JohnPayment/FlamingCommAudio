@@ -168,25 +168,18 @@ void CALLBACK TCPRoutine(DWORD Error, DWORD BytesTransferred, LPWSAOVERLAPPED Ov
 		
 		break;
 	case 4:
-		{
-			char buffer[DATA_BUFSIZE];
-			readFile.seekg(0, currentPos);
-			readFile.read(buffer, DATA_BUFSIZE);
-			currentPos = readFile.tellg();
-			for(int i = 0; i < DATA_BUFSIZE; ++i)
-			{
-				SI->Buffer[i] = buffer[i];
-			}
+		readFile.seekg(0, currentPos);
+		readFile.read(SI->Buffer, DATA_BUFSIZE);
+		currentPos = readFile.tellg();
 		
-			if(!readFile.good())
-			{
-				TCPMode = 0;
-			}
-			didWrite = true;
-
-			TCPServer::get()->writeToSocket(SI);
-			break;
+		if(!readFile.good())
+		{
+			TCPMode = 0;
 		}
+		didWrite = true;
+
+		TCPServer::get()->writeToSocket(SI);
+		break;
 	}
 
 	if(!didWrite)
