@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
 	RunMulticast();*/
 
 	MicServerSessionThread();
-	//WSACleanup();
+	WSACleanup();
 
 	return (0);
 }
