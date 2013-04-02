@@ -9,6 +9,11 @@
 #include <cstdlib>
 #include <conio.h>
 #include <cassert>
+
+#include <libzplay.h>
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "libzplay.lib")
+
 #include <fstream>
 #include <iostream>
 
@@ -38,7 +43,7 @@ int SetReuseAddr(SOCKET* socketfd);
 void StartMicSession(SOCKET socketfd);
 int SendMicSessionRequest(SOCKET socketfd);
 int SendAudioData(SOCKET s);
-void CALLBACK PlaybackRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
+int __stdcall PlaybackRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 
 DWORD WINAPI ListenForPackets(LPVOID lpParameter);
 DWORD WINAPI MonitorMicInput(LPVOID lpParameter);
