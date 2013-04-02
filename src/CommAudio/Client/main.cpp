@@ -1,8 +1,23 @@
-/*------------------------------------------------------------
-
-	This is only a place holder so that the client will build without error.
-
---------------------------------------------------------------*/
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE: main.cpp - The entry point for the client side of the comm audio application.
+--
+-- PROGRAM: CommAudio
+--
+-- FUNCTIONS: int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
+--            LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM)
+--            void writeFileFromNetwork(char* fileName, TCPClient* client)
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- NOTES:
+-- The main function simply creates window that will be taking use imput to determine what jobs should be run.
+----------------------------------------------------------------------------------------------------------------------*/
 #include "client.h"
 #include "TCPClient.h"
 #include "resource.h"
@@ -16,12 +31,30 @@ using namespace std;
 void writeFileFromNetwork(char* fileName, TCPClient* client);
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
 char response[BUFFER_SIZE];
 char outputLine[BUFFER_SIZE];
 TCPClient* tcp;
 int fileSize;
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                    PSTR szCmdLine, int iCmdShow)
+
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: WinMain
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
+--
+-- RETURNS: int - 0 upon success
+--
+-- NOTES: Main entry point to the client.
+----------------------------------------------------------------------------------------------------------------------*/
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 {
 	static TCHAR szAppName[] = TEXT("HelloWin");
 	HWND         hwnd;
@@ -69,6 +102,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	return msg.wParam;
 }
 
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: WndProc
+--
+-- DATE: 2013/03/23
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment, Jesse Wright
+--
+-- INTERFACE: LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+--
+-- RETURNS: The result of the call. usually 0.
+--
+-- NOTES: manages the window's messages.
+----------------------------------------------------------------------------------------------------------------------*/
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HDC         hdc;
@@ -123,26 +173,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		switch(LOWORD(wParam))
 		{
-		case ID_CONNECTMENU_RADIO:
+		case ID_CONNECTMENU_RADIO: // Start Radio Mode. Not currently used
 			//Close P2P
 			//CLose FileTransfer
 			break;
-		case ID_CONNECTMENU_P2P:
+		case ID_CONNECTMENU_P2P: // Start Microphone Mode
 			{
-				/*
-				if(tcp != NULL)
-				{
-					delete tcp;
-				}*/
-
 				char * ip = new char[IPSIZE];
 				GetWindowText(IPBox, ip, IPSIZE);
-				/*tcp = new TCPClient(SetDestinationAddr(ip, 5150));
-				tcp->StartClient();
-				tcp->writeToSocket(MICROPHONE);*/
-				//Close Radio
-				//CLose FileTransfer
-				//send tcp request to server
 				
 				//start p2p udp session
 				//runs the session unitl
@@ -150,7 +188,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			}
 			break;
-		case ID_CONNECTMENU_FILETRANSFER:
+		case ID_CONNECTMENU_FILETRANSFER: // Start TCP Mode
 			{
 				if(tcp != NULL)
 				{
@@ -173,7 +211,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 			}
 			break;
-		case ID_POST_FILENAME: // DOWNLOAD
+		case ID_POST_FILENAME: // DOWNLOAD (TCP Mode)
 			if(tcp != NULL)
 			{
 				char temp[BUFFER_SIZE] =  START_TRANSFER;
@@ -186,42 +224,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 				// Storing response
 				tcp->readFromSocket(response);
-				//tcp->readFromSocket(response);
+
 				fileSize = atoi(response);
 				writeFileFromNetwork(fileName, tcp);
-				if(!strcmp(response, START_TRANSFER))
-				{
-					// Start writing file
-				}
 			}
 			break;
-		case ID_POST_UPLOAD:
+		case ID_POST_UPLOAD: // UPLOAD (TCP Mode)  - Not currently used.
 			if(tcp != NULL)
 			{
-				tcp->writeToSocket(START_UPLOAD);
+				char temp[BUFFER_SIZE] =  START_TRANSFER;
 				char fileName[BUFFER_SIZE];
-				char data[BUFFER_SIZE];
+				
 				GetWindowText(FileNameBox, fileName, BUFFER_SIZE);
+				strcat(temp, fileName);
 				// Sending fileName to server
-				tcp->writeToSocket(fileName);
+				tcp->writeToSocket(temp);
 
-				ifstream readFile;
-				readFile.open(fileName);
-
-				// File Transfer
-				while(true)
-				{
-					readFile.read(data, BUFFER_SIZE);
-					tcp->writeToSocket(data);
-
-					if(readFile.eof())
-					{
-						readFile.close();
-						break;
-					}
-				}
-				break;
+				// Read From File
+				// Write to Socket
 			}
+			break;
 		}
 		return 0;
 	case WM_DESTROY:
@@ -232,6 +254,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: writeFileFromNetwork
+--
+-- DATE: 2013/03/28
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: John Payment
+--
+-- PROGRAMMER: John Payment
+--
+-- INTERFACE: void writeFileFromNetwork(char* fileName, TCPClient* client)
+--                 char* fileName - the name of the file to be opened
+--                 TCPClient* Pointer to the client that we are streaming data from
+--
+-- RETURNS: void
+--
+-- NOTES: This function reads binary data from a TCP SOCKET and writes it to a file until it has reached a predefined file size.
+----------------------------------------------------------------------------------------------------------------------*/
 void writeFileFromNetwork(char* fileName, TCPClient* client)
 {
 	ofstream file(fileName, std::ofstream::binary);
@@ -245,6 +286,9 @@ void writeFileFromNetwork(char* fileName, TCPClient* client)
 		if(n + totalRecv  > fileSize)
 		{
 			n = fileSize - totalRecv;
+		} else if(n == -1)
+		{
+			break;
 		}
 		file.write(fileChunk, n);
 		totalRecv += n;
