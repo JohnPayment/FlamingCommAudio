@@ -14,6 +14,7 @@
 -- void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpOverlapped, DWORD dwFlags);
 -- void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv);
 -- int ReadFromFile(HANDLE hFile, char* buffer);
+-- void OpenWinFile(HANDLE* hFile, string name);
 --
 --
 -- DATE: 2013/03/23
@@ -285,34 +286,28 @@ int SetReuseAddr(SOCKET* socketfd)
 	}
 	return result;
 }
-
-
-int SendMicSessionRequest(SOCKET *socketfd, const struct sockaddr *dest, OVERLAPPED *sendOv)
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: OpenWinFile
+--
+-- DATE: 2013/03/29
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Jesse Wright
+--
+-- PROGRAMMER: Jesse Wright
+--
+-- INTERFACE: void OpenWinFile(HANDLE* hFile, string name)
+--
+-- RETURNS: void.
+--
+-- NOTES: Wrapper for opening a file in WIN 32
+----------------------------------------------------------------------------------------------------------------------*/
+void OpenWinFile(HANDLE* hFile, string name)
 {
-	char recvBuf[BUFLEN];
-	WSABUF buffer;
-	buffer.buf = recvBuf;
-	buffer.len = BUFLEN;
-	DWORD bytesRecv;
-	int addr_size = sizeof(struct sockaddr);
-	WSAOVERLAPPED recvOv;
-	char reqPacket[BUFLEN] = "-r"; //request flag
-
-	ZeroMemory(&recvOv, sizeof(WSAOVERLAPPED));
-
-	UDPSend(*socketfd, reqPacket, dest, sendOv, 3); //send request
-
-	if(WSARecvFrom(*socketfd, &buffer, 1, &bytesRecv, 0, (PSOCKADDR) dest, &addr_size, &recvOv, UDPRoutine) != 0)
+	*hFile = CreateFile(name.c_str(), GENERIC_READ, NULL, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if(hFile == INVALID_HANDLE_VALUE)
 	{
-		if (WSAGetLastError() != WSA_IO_PENDING)
-         {
-            printf("WSARecv() failed with error %d\n", WSAGetLastError());
-            return -1;
-         }
+		printf("Error opening Song. Ernum: %d,", GetLastError);
 	}
-	//if the buffer receives an acknowledgement flag
-	if(strcmp(buffer.buf, "-a") == 0)
-		return 0;
-
-	return -1;
 }

@@ -37,7 +37,7 @@ void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpO
 void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv, int length);
 void UDPRead(OVERLAPPED *recvOv);
 int SetReuseAddr(SOCKET* socketfd);
-
+void OpenWinFile(HANDLE* hFile, std::string name);
 int SendMicSessionRequest(SOCKET socketfd);
 
 

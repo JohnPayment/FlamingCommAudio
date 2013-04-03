@@ -34,7 +34,6 @@ bool bQuit;
 SOCKET sock;
 struct	sockaddr_in server;
 char buffer[10000];
-void OpenWinFile(HANDLE* hFile, string name);
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: DisableLoopback
 --
@@ -145,14 +144,6 @@ void RunMulticast()
 	
 
 	closesocket(socketfd);
-}
-void OpenWinFile(HANDLE* hFile, string name)
-{
-	*hFile = CreateFile(name.c_str(), GENERIC_READ, NULL, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if(hFile == INVALID_HANDLE_VALUE)
-	{
-		printf("Error opening Song. Ernum: %d,", GetLastError);
-	}
 }
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: SetTimeToLive
