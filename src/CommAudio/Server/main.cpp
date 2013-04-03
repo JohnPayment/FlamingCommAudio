@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	StartServerMicSession();
+
 	TCPMode = 0;
 	didWrite = false;
 	
@@ -72,8 +73,6 @@ int main(int argc, char *argv[])
 	TCPServer::get()->StartServer();
 	TCPServer::get()->ListenForClients();
 	WSACleanup();
-
-	
 
 	return (0);
 }
