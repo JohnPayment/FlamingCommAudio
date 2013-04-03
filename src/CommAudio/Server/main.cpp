@@ -57,7 +57,7 @@ bool didWrite;
 int main(int argc, char *argv[]) 
 {
 	HANDLE MulticastThread, MicSessionThread;
-
+	
 	MulticastThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE) RunMulticast, NULL, NULL, NULL);
 	if(MulticastThread == NULL)
 	{

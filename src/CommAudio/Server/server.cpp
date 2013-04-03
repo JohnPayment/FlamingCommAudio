@@ -185,6 +185,7 @@ void StartServerMicSession()
 	HANDLE MicSessionHandle;
 	DWORD threadID;
 
+	printf("Microphone Session started. Awaiting client...\n");
 	if((MicSessionHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) MicServerSessionThread, NULL, 0, &threadID)) == 0)
 	{
 		MessageBox(NULL, "Microphone session thread creation failed", NULL, MB_OK);
@@ -236,8 +237,11 @@ DWORD WINAPI MicServerSessionThread()
         {
             int a = getch();
             if(a == 'q' || a == 'Q')
+			{	
+				printf("P2P Microphone session ended.\n");
                 break; // end program if Q key is pressed
-        }
+			}
+		}
 
 		int size = sizeof(server);
 		if((recv_bytes = recvfrom(sock, buffer, sizeof(buffer), 0, (sockaddr*)&server, &size)) < 0)
@@ -251,7 +255,6 @@ DWORD WINAPI MicServerSessionThread()
 		}
 		mic->SetCallbackFunc(SendRoutine, (TCallbackMessage) (MsgWaveBuffer|MsgStop), NULL);
 		mic->Play();
-		printf("%d got %d \n", GetTickCount(), recv_bytes);
         speaker->PushDataToStream(buffer, recv_bytes);
         speaker->Play();
 	
@@ -277,7 +280,6 @@ int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMe
 	if ( message == MsgStop )
 		return closesocket(sock);
 
-	printf("%d sent %d \n", GetTickCount(), param2);
 	if (sendto(sock, (const char *)param1, param2, 0, (const struct sockaddr*)&server, sizeof(server)) < 0)
 			return 2;
 
