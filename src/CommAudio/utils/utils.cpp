@@ -285,34 +285,3 @@ int SetReuseAddr(SOCKET* socketfd)
 	}
 	return result;
 }
-
-
-int SendMicSessionRequest(SOCKET *socketfd, const struct sockaddr *dest, OVERLAPPED *sendOv)
-{
-	char recvBuf[BUFLEN];
-	WSABUF buffer;
-	buffer.buf = recvBuf;
-	buffer.len = BUFLEN;
-	DWORD bytesRecv;
-	int addr_size = sizeof(struct sockaddr);
-	WSAOVERLAPPED recvOv;
-	char reqPacket[BUFLEN] = "-r"; //request flag
-
-	ZeroMemory(&recvOv, sizeof(WSAOVERLAPPED));
-
-	UDPSend(*socketfd, reqPacket, dest, sendOv, 3); //send request
-
-	if(WSARecvFrom(*socketfd, &buffer, 1, &bytesRecv, 0, (PSOCKADDR) dest, &addr_size, &recvOv, UDPRoutine) != 0)
-	{
-		if (WSAGetLastError() != WSA_IO_PENDING)
-         {
-            printf("WSARecv() failed with error %d\n", WSAGetLastError());
-            return -1;
-         }
-	}
-	//if the buffer receives an acknowledgement flag
-	if(strcmp(buffer.buf, "-a") == 0)
-		return 0;
-
-	return -1;
-}

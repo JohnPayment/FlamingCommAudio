@@ -19,6 +19,7 @@
 
 #define BUFLEN 1024
 #define RECV_MAX 2048
+#define PORT     5150
 typedef struct recvData
 {
 	bool bQuit;
@@ -37,9 +38,5 @@ void CALLBACK UDPRoutine(DWORD dwError, DWORD dwTransferred, LPWSAOVERLAPPED lpO
 void UDPSend(SOCKET s, char* buf, const struct sockaddr *dest, OVERLAPPED *sendOv, int length);
 void UDPRead(OVERLAPPED *recvOv);
 int SetReuseAddr(SOCKET* socketfd);
-
-int SendMicSessionRequest(SOCKET socketfd);
-
-
 
 #endif

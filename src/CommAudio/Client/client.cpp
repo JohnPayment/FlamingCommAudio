@@ -5,18 +5,23 @@
 --
 -- FUNCTIONS:
 -- void WINAPI ClientMulticastThread()
--- 
+-- DWORD WINAPI MicClientSessionThread(LPVOID lpParameter);
+-- void StartClientMicSession(char * IPAddress); //start mic session client thread
+-- int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 --
 -- DATE: 2013/03/26
 --
 -- REVISIONS: (Date and Description)
 --
 -- DESIGNER: Jesse Wright
+--			 Luke Tao
 --
 -- PROGRAMMER: Jesse Wright
+--			   Luke Tao
 --
 -- NOTES:
--- Holds the code that will run the server side of the application.
+-- Holds the code that will run the server side of the application. The client has the option to send a request
+-- to the server for a peer-to-peer microphone session.
 ----------------------------------------------------------------------------------------------------------------------*/
 #include "client.h"
 #include "libzplay.h"
@@ -153,19 +158,58 @@ void WINAPI ClientMulticastThread()
 		}
 	}		
 }
-void StartMicSession(char * IPAddress)
+
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: StartClientMicSession
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Luke Tao
+--
+-- PROGRAMMER: Luke Tao
+--
+-- INTERFACE: void StartClientMicSession(char * IPAddress)
+--										
+--										 char * IPAddress - the server IP Address to send data to.
+--
+-- RETURNS: void.
+--
+-- NOTES: Function that creates the actual Microphone client session thread.
+----------------------------------------------------------------------------------------------------------------------*/
+void StartClientMicSession(char * IPAddress)
 {
 	HANDLE MicSessionHandle;
 	DWORD threadID;
 
-	if((MicSessionHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) MicSessionThread, (LPVOID) IPAddress, 0, &threadID)) == 0)
+	if((MicSessionHandle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) MicClientSessionThread, (LPVOID) IPAddress, 0, &threadID)) == 0)
 	{
 		MessageBox(NULL, "Microphone session thread creation failed", NULL, MB_OK);
 		return;
 	}
 }
 
-DWORD WINAPI MicSessionThread(LPVOID lpParameter)
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: MicClientSessionThread
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Luke Tao
+--
+-- PROGRAMMER: Luke Tao
+--
+-- INTERFACE: DWORD WINAPI MicClientSessionThread(LPVOID lpParameter)
+--
+--												  LPVOID lpParameter - a server IP address passed in.
+--
+-- RETURNS: 0 on exit.
+--
+-- NOTES: The actual thread and processing for the microphone session client side.
+----------------------------------------------------------------------------------------------------------------------*/
+DWORD WINAPI MicClientSessionThread(LPVOID lpParameter)
 {
 
 	char * IPAddress = (char *) lpParameter;
@@ -184,9 +228,9 @@ DWORD WINAPI MicSessionThread(LPVOID lpParameter)
 		MessageBox(NULL, output, "Error", NULL);
 		delete[] IPAddress;
 	}
-	server = SetDestinationAddr(IPAddress, 5150);
+	server = SetDestinationAddr(IPAddress, PORT);
 	//Bind the socket
-	if((result = BindSocket(&sock, INADDR_ANY, 5150)) == SOCKET_ERROR)
+	if((result = BindSocket(&sock, INADDR_ANY, PORT)) == SOCKET_ERROR)
 	{
 		sprintf(output, "BindSocket error: %d\n", WSAGetLastError());
 		MessageBox(NULL, output, "Error", NULL);
@@ -227,19 +271,21 @@ DWORD WINAPI MicSessionThread(LPVOID lpParameter)
 	while(1) {
 		
 		int size = sizeof(server);
-		
+
+		// end microphone session if 'q' is pressed
 		if(kbhit())
         {
             int a = getch();
             if(a == 'q' || a == 'Q')
-                break; // end program if Q key is pressed
+                break; 
         }
-		// Simply send the entire microphone data buffer to server.
+
+		//receive microphone data from client socket
 		if((recv_bytes = recvfrom(sock, buf, sizeof(buf), 0, (sockaddr*)&server, &size)) < 0)
 		{
 			int err = WSAGetLastError();
 			if(err == 10054)
-				MessageBox(NULL, "Connection reset by peer.", NULL, MB_OK);
+				MessageBox(NULL, "P2P Microphone session ended.", NULL, MB_OK);
 			else
 			{
 				sprintf(output, "Get Last error %d\n", err);
@@ -248,6 +294,7 @@ DWORD WINAPI MicSessionThread(LPVOID lpParameter)
 			
 			break;
 		}
+		//Process and play microphone data
 		speakers->PushDataToStream(buf, recv_bytes);
 		speakers->Play();
 	}
@@ -259,11 +306,36 @@ DWORD WINAPI MicSessionThread(LPVOID lpParameter)
 
 }
 
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: SendRoutine
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Luke Tao
+--
+-- PROGRAMMER: Luke Tao
+--
+-- INTERFACE: int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+--										
+--										void* instance - not used, parameter is for passing in ZPlay object.										
+--										void* user_data - not used, parameter is for passing in number of bytes read from a sound file.
+--										libZPlay::TCallbackMessage message - message passed in to be handled.
+--										unsigned int param1 - audio buffer data to be sent.
+--										unsigned int param2 - the size of the audio buffer data.										
+--
+-- RETURNS: Returns 1 on success, 2 when sending audio data to the server fails.
+--
+-- NOTES: This is the completion callback routine for sending microphone data to the server. Note that this callback
+--        function is used from the "libZPlay" API library.
+----------------------------------------------------------------------------------------------------------------------*/
 int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
 	if ( message == MsgStop )
 		return closesocket(sock);
 
+	//Push microphone data to the client
 	if (sendto(sock, (const char *)param1, param2, 0, (const struct sockaddr*)&server, sizeof(server)) < 0)
 			return 2;
 

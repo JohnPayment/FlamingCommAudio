@@ -184,7 +184,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 				//start p2p udp session
 				//runs the session unitl
-				StartMicSession(ip);
+				StartClientMicSession(ip);
 
 			}
 			break;
