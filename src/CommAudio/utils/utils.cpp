@@ -285,6 +285,7 @@ int SetReuseAddr(SOCKET* socketfd)
 		printf("setsockopt error: %d\n", WSAGetLastError());
 	}
 	return result;
+
 }
 /*-------------------------------------------------------------------------------------------------------------------- 
 -- FUNCTION: OpenWinFile

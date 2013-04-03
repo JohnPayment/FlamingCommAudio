@@ -6,14 +6,20 @@
 -- FUNCTIONS:
 -- void DisableLoopback(SOCKET *socketfd);
 -- void RunMulticast();
+-- void SetTimeToLive(SOCKET s, u_long TTL);
+-- DWORD WINAPI MicServerSessionThread();
+-- void StartServerMicSession(); //start mic session client thread
+-- int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2);
 --
 -- DATE: 2013/03/23
 --
 -- REVISIONS: (Date and Description)
 --
 -- DESIGNER: Jesse Wright
+--           Luke Tao
 --
 -- PROGRAMMER: Jesse Wright
+--			   Luke Tao
 --
 -- NOTES:
 -- The server will handle client requests via a TCP control channel, and from there will handle the clients requests
@@ -171,6 +177,23 @@ void SetTimeToLive(SOCKET s, u_long TTL)
 	}
 }
 
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: StartServerMicSession
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Luke Tao
+--
+-- PROGRAMMER: Luke Tao
+--
+-- INTERFACE: void StartServerMicSession()
+--
+-- RETURNS: void.
+--
+-- NOTES: Function that creates the actual Microphone server session thread.
+----------------------------------------------------------------------------------------------------------------------*/
 void StartServerMicSession()
 {
 	HANDLE MicSessionHandle;
@@ -184,6 +207,23 @@ void StartServerMicSession()
 	}
 }
 
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: MicServerSessionThread
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Luke Tao
+--
+-- PROGRAMMER: Luke Tao
+--
+-- INTERFACE: DWORD WINAPI MicServerSessionThread()
+--
+-- RETURNS: 0 on exit.
+--
+-- NOTES: The actual thread and processing for the microphone session server side.
+----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI MicServerSessionThread()
 {
 	int	i, j, server_len, client_len, result, recv_bytes;
@@ -193,7 +233,7 @@ DWORD WINAPI MicServerSessionThread()
 
 	// Create a datagram socket
 	sock = NewUDPSocket();
-	if((result = BindSocket(&sock, INADDR_ANY, 5150)) == SOCKET_ERROR)
+	if((result = BindSocket(&sock, INADDR_ANY, PORT)) == SOCKET_ERROR)
 	{
 		perror("Cannot bind socket");
 		exit(1);
@@ -224,16 +264,18 @@ DWORD WINAPI MicServerSessionThread()
 	
 	while(true)
 	{
+		// end microphone session if 'q' is pressed
 		if(kbhit())
         {
             int a = getch();
             if(a == 'q' || a == 'Q')
 			{	
 				printf("P2P Microphone session ended.\n");
-                break; // end program if Q key is pressed
+                break; 
 			}
 		}
 
+		//receive microphone data from server socket
 		int size = sizeof(server);
 		if((recv_bytes = recvfrom(sock, buffer, sizeof(buffer), 0, (sockaddr*)&server, &size)) < 0)
 		{
@@ -246,19 +288,20 @@ DWORD WINAPI MicServerSessionThread()
 		}
 		mic->SetCallbackFunc(SendRoutine, (TCallbackMessage) (MsgWaveBuffer|MsgStop), NULL);
 		mic->Play();
+
+		//Process and play microphone data
         speaker->PushDataToStream(buffer, recv_bytes);
         speaker->Play();
 	
-		//printf("Buffer: %s\n", buffer);
         // get stream status to check if song is still playing
         TStreamStatus status;
         speaker->GetStatus(&status);
         if(status.fPlay == 0)
-			break; // exit checking loop
+			break;
  
-            TStreamTime pos;
-            speaker->GetPosition(&pos);
-            printf("Pos: %02u:%02u:%02u:%03u\r", pos.hms.hour, pos.hms.minute, pos.hms.second, pos.hms.millisecond);
+        TStreamTime pos;
+        speaker->GetPosition(&pos);
+        printf("Pos: %02u:%02u:%02u:%03u\r", pos.hms.hour, pos.hms.minute, pos.hms.second, pos.hms.millisecond);
 	}
 	speaker->Release();
 	mic->Release();
@@ -266,11 +309,36 @@ DWORD WINAPI MicServerSessionThread()
     return 0;
 }
 
+/*-------------------------------------------------------------------------------------------------------------------- 
+-- FUNCTION: SendRoutine
+--
+-- DATE: 2013/03/24
+--
+-- REVISIONS: (Date and Description)
+--
+-- DESIGNER: Luke Tao
+--
+-- PROGRAMMER: Luke Tao
+--
+-- INTERFACE: int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
+--										
+--										void* instance - not used, parameter is for passing in ZPlay object.										
+--										void* user_data - not used, parameter is for passing in number of bytes read from a sound file.
+--										libZPlay::TCallbackMessage message - message passed in to be handled.
+--										unsigned int param1 - audio buffer data to be sent.
+--										unsigned int param2 - the size of the audio buffer data.										
+--
+-- RETURNS: Returns 1 on success, 2 when sending audio data to the client fails.
+--
+-- NOTES: This is the completion callback routine for sending microphone data to the client. Note that this callback
+--        function is used from the "libZPlay" API library.
+----------------------------------------------------------------------------------------------------------------------*/
 int __stdcall SendRoutine(void* instance, void *user_data, libZPlay::TCallbackMessage message, unsigned int param1, unsigned int param2)
 {
 	if ( message == MsgStop )
 		return closesocket(sock);
 
+	//Push microphone data to the server
 	if (sendto(sock, (const char *)param1, param2, 0, (const struct sockaddr*)&server, sizeof(server)) < 0)
 			return 2;
 

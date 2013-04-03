@@ -19,6 +19,7 @@
 
 #define BUFLEN 1024
 #define RECV_MAX 2048
+#define PORT     5150
 typedef struct recvData
 {
 	bool bQuit;
@@ -39,7 +40,5 @@ void UDPRead(OVERLAPPED *recvOv);
 int SetReuseAddr(SOCKET* socketfd);
 void OpenWinFile(HANDLE* hFile, std::string name);
 int SendMicSessionRequest(SOCKET socketfd);
-
-
 
 #endif
